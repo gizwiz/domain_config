@@ -1,0 +1,241 @@
+package main
+
+import (
+  "strconv"
+)
+
+templ properties(data []PropertyValue, keyFilter string) {
+   <html>
+      <head>      
+         <style type="text/css">
+            table {
+                      font-family: monospace;
+                width: 100%;
+                border-collapse: collapse;
+            }
+
+            table, th, td {
+                border: 1px solid #ddd;
+            }
+
+            th {
+                background-color: #f2f2f2; /* Soft background color for headers */
+                text-align: left;
+                padding: 8px;
+            }
+
+            td {
+                padding: 8px;
+            }
+
+            /* Style for the first column (key column) */
+            td:first-child {
+                background-color: #f9f9f9; /* Soft background color for the key column */
+            }
+
+            #properties tbody tr:focus td:first-child {
+                background-color: #e7f4ff; /* Light blue background for visual focus indication */
+            }
+         </style>
+         <script>
+           document.addEventListener('DOMContentLoaded', function() {
+                var input = document.getElementById('filterInput');
+                var tableRows = document.querySelectorAll('#properties tbody tr');
+
+                // When a row is focused, store it's ID
+                tableRows.forEach(row => {
+                  row.addEventListener('focus', function() {
+                    localStorage.setItem('focusedRow', this.getAttribute('data-id'));
+                  }, true); // Use capture to ensure the event is detected
+                });
+
+                // when a page is loaded, restore the focus if an ID is stored
+                var focusedRowId = localStorage.getItem('focusedRow');
+                if (focusedRowId) {
+                  var rowToFocus = document.querySelector('#properties tbody tr[data-id="' + focusedRowId + '"]');
+                  if (rowToFocus) {
+                    rowToFocus.focus(); // Focus the row
+                    // Optional: scroll into view
+                    rowToFocus.scrollIntoView();
+                  }
+                }
+
+                var editForm = document.getElementById('editForm');
+                var editModeInput = document.getElementById('editMode');
+                var editIdInput = document.getElementById('editID');
+                var editKeyInput = document.getElementById('editKey');
+                var editDescriptionInput = document.getElementById('editDescription')
+                var editDefaultValueInput = document.getElementById('editDefaultValue')
+                var editModifiedValueInput = document.getElementById('editModifiedValue')
+
+
+                function showEditForm(mode, id = -1, key = '', description = '', defaultValue = '', modifiedValue = '') {
+                    var formAction = mode === 'insert' ? '/insert' : '/update';
+                    editForm.setAttribute('action', formAction);
+
+                    editModeInput.value = mode;
+                    editIdInput.value = id;
+                    editKeyInput.value = key;
+                    editDescriptionInput.value = description;
+                    editDefaultValueInput.value = defaultValue;
+                    editModifiedValueInput.value = modifiedValue;
+
+                    editForm.style.display = '';
+                    editKeyInput.focus();
+                }
+
+                function isInputActive() {
+                    var activeElement = document.activeElement;
+                    return activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA';
+                }
+
+                function toggleHelpScreen(display) {
+                    document.getElementById('helpScreen').style.display = display ? '' : 'none';
+                }
+                
+                // Function to move focus to the next or previous row
+                function moveFocus(currentRow, offset) {
+                    var currentIndex = Array.from(tableRows).indexOf(currentRow);
+                    var nextIndex = currentIndex + offset;
+                    if (nextIndex >= 0 && nextIndex < tableRows.length) {
+                        tableRows[nextIndex].focus();
+                    }
+                }
+
+                // Combined event listener for all keydown events
+                document.addEventListener('keydown', function(event) {
+                
+                    if (isInputActive()) {
+                        return; // Exit early if an input or textarea is active
+                    }
+
+                    if (event.key === '?') {
+                        event.preventDefault();
+                        document.getElementById('helpScreen').style.display = '';
+                    }
+
+                    switch (event.key) {
+                       case '?':
+                          event.preventDefault();
+                          toggleHelpScreen(true);
+                          break;
+                       case 'Escape':
+                          event.preventDefault();
+                          toggleHelpScreen(false);
+                          break;
+                    }
+
+                    var activeElement = document.activeElement;
+                    var handled = false;
+
+                    if (activeElement === input && event.key === 'Tab') {
+                        // Tab to focus the first table row
+                        event.preventDefault();
+                        tableRows[0].focus();
+                        handled = true;
+                    } else if (event.ctrlKey && event.key === 'f') {
+                        // Ctrl+F to focus the input
+                        event.preventDefault();
+                        input.focus();
+                        input.select();
+                        handled = true;
+                    } else if (event.key === 'n') {
+                        // New record mode
+                        event.preventDefault();
+                        showEditForm('insert');
+                    } else if (activeElement.tagName === 'TR') {
+                        // Arrow or k/j keys to navigate rows
+                        if (event.key === 'ArrowUp' || event.key === 'k') {
+                            event.preventDefault();
+                            moveFocus(activeElement, -1);
+                            handled = true;
+                        } else if (event.key === 'ArrowDown' || event.key === 'j') {
+                            event.preventDefault();
+                            moveFocus(activeElement, 1);
+                            handled = true;
+                        } else if (event.key === 'e') {
+                            // e to edit the row
+                            event.preventDefault();
+                            var id = activeElement.dataset.id; // Assuming each row has a 'data-id' attribute with the record ID
+                            fetch('/property/' + id)
+                                .then(response => response.json())
+                                .then(data => {
+                                    showEditForm('update', data.id, data.key, data.description, data.default_value, data.modified_value);
+                                })
+                                .catch(error => console.error('Error fetching property:', error));
+                        }
+                    }
+
+                    if (handled) {
+                        // Stop the default action to prevent the browser from scrolling
+                        event.stopPropagation();
+                    }
+                });
+
+                // Event listener to submit the form when Enter is pressed in the input
+                input.addEventListener('keyup', function(event) {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        this.form.submit();
+                    }
+                });
+           });
+
+     </script>
+
+     </head>
+     <body>
+        <form action="/properties" method="get">
+            <input type="text" id="filterInput" name="keyFilter" value={ keyFilter } placeholder="Search for keys..."/>
+        </form>   
+        <form id="editForm" style="display: none;" method="post">
+            <input type="hidden" id="editMode" name="mode" value=""/>
+            <input type="hidden" id="editID" name="id" value=""/>
+            <input type="text" id="editKey" name="key" value=""/>
+            <input type="text" id="editDescription" name="description" placeholder="description"/>
+            <input type="text" id="editDefaultValue" name="defaultValue" placeholder="default value"/>
+            <input type="text" id="editModifiedValue" name="modifiedValue" placeholder="value specific for this domain"/>
+            <input type="submit" value="Submit"/>
+        </form>
+        <table id="properties"> 
+            <thead>
+                <tr>
+                    <th>Key</th>
+                    <th>Description</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                for _, item := range data {
+                <tr tabindex="0" data-id={ strconv.Itoa(item.id) }>
+                    <td>{ item.key }</td>
+                    if item.description.Valid { 
+                       <td>{ item.description.String }</td> 
+                    } else { 
+                       <td/> 
+                    }
+                    if item.value.Valid {
+                       <td>{ item.value.String }</td>
+                    } else {
+                       <td/>
+                    }
+                </tr>
+                }
+            </tbody>
+        </table>
+
+        <div id="helpScreen" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0, 0, 0, 0.5);">
+            <div style="background:white; margin:10% auto; padding:20px; width:50%;">
+                <h2>Keyboard Shortcuts</h2>
+                <p><strong>ctrl-f:</strong> go to the FilterKey field. Here you can edit and enter to do the filter.</p>
+                <p><strong>n:</strong> Create new record</p>
+                <p><strong>e:</strong> Edit selected record</p>
+                <p><strong>?:</strong> Show this help screen</p>
+                <!-- Add more shortcuts as needed -->
+                <button onclick="document.getElementById('helpScreen').style.display='none'">Close</button>
+            </div>
+        </div>
+
+    </body>
+  </html>
+}
