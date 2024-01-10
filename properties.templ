@@ -104,66 +104,82 @@ templ properties(data []PropertyValue, keyFilter string) {
 
                 // Combined event listener for all keydown events
                 document.addEventListener('keydown', function(event) {
-                
                     if (isInputActive()) {
                         return; // Exit early if an input or textarea is active
-                    }
-
-                    if (event.key === '?') {
-                        event.preventDefault();
-                        document.getElementById('helpScreen').style.display = '';
-                    }
-
-                    switch (event.key) {
-                       case '?':
-                          event.preventDefault();
-                          toggleHelpScreen(true);
-                          break;
-                       case 'Escape':
-                          event.preventDefault();
-                          toggleHelpScreen(false);
-                          break;
                     }
 
                     var activeElement = document.activeElement;
                     var handled = false;
 
-                    if (activeElement === input && event.key === 'Tab') {
-                        // Tab to focus the first table row
-                        event.preventDefault();
-                        tableRows[0].focus();
-                        handled = true;
-                    } else if (event.ctrlKey && event.key === 'f') {
-                        // Ctrl+F to focus the input
-                        event.preventDefault();
-                        input.focus();
-                        input.select();
-                        handled = true;
-                    } else if (event.key === 'n') {
-                        // New record mode
-                        event.preventDefault();
-                        showEditForm('insert');
-                    } else if (activeElement.tagName === 'TR') {
-                        // Arrow or k/j keys to navigate rows
-                        if (event.key === 'ArrowUp' || event.key === 'k') {
+                    switch (event.key) {
+                        case '?':
                             event.preventDefault();
-                            moveFocus(activeElement, -1);
+                            toggleHelpScreen(true);
+                            break;
+
+                        case 'Escape':
+                            event.preventDefault();
+                            toggleHelpScreen(false);
+                            break;
+
+                        case 'Tab':
+                            if (activeElement === input) {
+                                // Tab to focus the first table row
+                                event.preventDefault();
+                                tableRows[0].focus();
+                                handled = true;
+                            }
+                            break;
+
+                        case 'f':
+                            if (event.ctrlKey) {
+                                // Ctrl+F to focus the input
+                                event.preventDefault();
+                                input.focus();
+                                input.select();
+                                handled = true;
+                            }
+                            break;
+
+                        case 'n':
+                            // New record mode
+                            event.preventDefault();
+                            showEditForm('insert');
                             handled = true;
-                        } else if (event.key === 'ArrowDown' || event.key === 'j') {
-                            event.preventDefault();
-                            moveFocus(activeElement, 1);
-                            handled = true;
-                        } else if (event.key === 'e') {
-                            // e to edit the row
-                            event.preventDefault();
-                            var id = activeElement.dataset.id; // Assuming each row has a 'data-id' attribute with the record ID
-                            fetch('/property/' + id)
-                                .then(response => response.json())
-                                .then(data => {
-                                    showEditForm('update', data.id, data.key, data.description, data.default_value, data.modified_value);
-                                })
-                                .catch(error => console.error('Error fetching property:', error));
-                        }
+                            break;
+
+                        case 'ArrowUp':
+                        case 'k':
+                            if (activeElement.tagName === 'TR') {
+                                event.preventDefault();
+                                moveFocus(activeElement, -1);
+                                handled = true;
+                            }
+                            break;
+
+                        case 'ArrowDown':
+                        case 'j':
+                            if (activeElement.tagName === 'TR') {
+                                event.preventDefault();
+                                moveFocus(activeElement, 1);
+                                handled = true;
+                            }
+                            break;
+
+                        case 'e':
+                            if (activeElement.tagName === 'TR') {
+                                // e to edit the row
+                                event.preventDefault();
+                                var id = activeElement.dataset.id; // Assuming each row has a 'data-id' attribute
+                                fetch('/property/' + id)
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        showEditForm('update', data.id, data.key, data.description, data.default_value, data.modified_value);
+                                    })
+                                    .catch(error => console.error('Error fetching property:', error));
+                                handled = true;
+                            }
+                            break;
                     }
 
                     if (handled) {
@@ -179,7 +195,8 @@ templ properties(data []PropertyValue, keyFilter string) {
                         this.form.submit();
                     }
                 });
-           });
+            });
+
 
      </script>
 
