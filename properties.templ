@@ -1,13 +1,13 @@
 package main
 
 import (
-  "strconv"
+	"strconv"
 )
 
 templ properties(data []PropertyValue, keyFilter string) {
-   <html>
-      <head>      
-         <style type="text/css">
+	<html>
+		<head>
+			<style type="text/css">
             table {
                       font-family: monospace;
                 width: 100%;
@@ -36,8 +36,8 @@ templ properties(data []PropertyValue, keyFilter string) {
             #properties tbody tr:focus td:first-child {
                 background-color: #e7f4ff; /* Light blue background for visual focus indication */
             }
-         </style>
-         <script>
+      </style>
+			<script>
            document.addEventListener('DOMContentLoaded', function() {
                 var input = document.getElementById('filterInput');
                 var tableRows = document.querySelectorAll('#properties tbody tr');
@@ -197,62 +197,58 @@ templ properties(data []PropertyValue, keyFilter string) {
                 });
             });
 
-
      </script>
-
-     </head>
-     <body>
-        <form action="/properties" method="get">
-            <input type="text" id="filterInput" name="keyFilter" value={ keyFilter } placeholder="Search for keys..."/>
-        </form>   
-        <form id="editForm" style="display: none;" method="post">
-            <input type="hidden" id="editMode" name="mode" value=""/>
-            <input type="hidden" id="editID" name="id" value=""/>
-            <input type="text" id="editKey" name="key" value=""/>
-            <input type="text" id="editDescription" name="description" placeholder="description"/>
-            <input type="text" id="editDefaultValue" name="defaultValue" placeholder="default value"/>
-            <input type="text" id="editModifiedValue" name="modifiedValue" placeholder="value specific for this domain"/>
-            <input type="submit" value="Submit"/>
-        </form>
-        <table id="properties"> 
-            <thead>
-                <tr>
-                    <th>Key</th>
-                    <th>Description</th>
-                    <th>Value</th>
-                </tr>
-            </thead>
-            <tbody>
-                for _, item := range data {
-                <tr tabindex="0" data-id={ strconv.Itoa(item.id) }>
-                    <td>{ item.key }</td>
-                    if item.description.Valid { 
-                       <td>{ item.description.String }</td> 
-                    } else { 
-                       <td/> 
-                    }
-                    if item.value.Valid {
-                       <td>{ item.value.String }</td>
-                    } else {
-                       <td/>
-                    }
-                </tr>
-                }
-            </tbody>
-        </table>
-
-        <div id="helpScreen" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0, 0, 0, 0.5);">
-            <div style="background:white; margin:10% auto; padding:20px; width:50%;">
-                <h2>Keyboard Shortcuts</h2>
-                <p><strong>ctrl-f:</strong> go to the FilterKey field. Here you can edit and enter to do the filter.</p>
-                <p><strong>n:</strong> Create new record</p>
-                <p><strong>e:</strong> Edit selected record</p>
-                <p><strong>?:</strong> Show this help screen</p>
-                <!-- Add more shortcuts as needed -->
-                <button onclick="document.getElementById('helpScreen').style.display='none'">Close</button>
-            </div>
-        </div>
-
-    </body>
-  </html>
+		</head>
+		<body>
+			<form action="/properties" method="get">
+				<input type="text" id="filterInput" name="keyFilter" value={ keyFilter } placeholder="Search for keys..."/>
+			</form>
+			<form id="editForm" style="display: none;" method="post">
+				<input type="hidden" id="editMode" name="mode" value=""/>
+				<input type="hidden" id="editID" name="id" value=""/>
+				<input type="text" id="editKey" name="key" value=""/>
+				<input type="text" id="editDescription" name="description" placeholder="description"/>
+				<input type="text" id="editDefaultValue" name="defaultValue" placeholder="default value"/>
+				<input type="text" id="editModifiedValue" name="modifiedValue" placeholder="value specific for this domain"/>
+				<input type="submit" value="Submit"/>
+			</form>
+			<table id="properties">
+				<thead>
+					<tr>
+						<th>Key</th>
+						<th>Description</th>
+						<th>Value</th>
+					</tr>
+				</thead>
+				<tbody>
+					for _, item := range data {
+						<tr tabindex="0" data-id={ strconv.Itoa(item.id) }>
+							<td>{ item.key }</td>
+							if item.description.Valid {
+								<td>{ item.description.String }</td>
+							} else {
+								<td></td>
+							}
+							if item.value.Valid {
+								<td>{ item.value.String }</td>
+							} else {
+								<td></td>
+							}
+						</tr>
+					}
+				</tbody>
+			</table>
+			<div id="helpScreen" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0, 0, 0, 0.5);">
+				<div style="background:white; margin:10% auto; padding:20px; width:50%;">
+					<h2>Keyboard Shortcuts</h2>
+					<p><strong>ctrl-f:</strong> go to the FilterKey field. Here you can edit and enter to do the filter.</p>
+					<p><strong>n:</strong> Create new record</p>
+					<p><strong>e:</strong> Edit selected record</p>
+					<p><strong>?:</strong> Show this help screen</p>
+					<!-- Add more shortcuts as needed -->
+					<button onclick="document.getElementById('helpScreen').style.display='none'">Close</button>
+				</div>
+			</div>
+		</body>
+	</html>
 }
