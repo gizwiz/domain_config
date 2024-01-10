@@ -40,14 +40,14 @@ func main() {
 	// display the key-value table
 	e.GET("/properties", func(c echo.Context) error {
 		keyFilter := c.QueryParam("keyFilter")
-		keyValues, err := fetchProperties(keyFilter)
+		props, err := fetchProperties(keyFilter)
 		if err != nil {
 			log.Println("Error fetching Properties:", err)
 			return err
 		}
 
 		// Use the properties templ to render the HTML table
-		return c.Render(http.StatusOK, "", properties(keyValues, keyFilter))
+		return c.Render(http.StatusOK, "", properties(props, keyFilter))
 	})
 
 	e.GET("/property/:id", getPropertyByID)
