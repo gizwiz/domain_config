@@ -1,4 +1,3 @@
-
 CREATE TABLE properties (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     key TEXT UNIQUE,

@@ -15,6 +15,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+const dbName = "main.db"
+
 // TemplRender is a custom renderer for Templ components in Echo
 type TemplRender struct{}
 
@@ -107,7 +109,7 @@ func (p Property) MarshalJSON() ([]byte, error) {
 
 // Fetch all rows from the Property table
 func fetchProperties(keyFilter string) ([]PropertyValue, error) {
-	db, err := sql.Open("sqlite3", "main.db")
+	db, err := sql.Open("sqlite3", dbName)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +154,7 @@ func insertProperty(c echo.Context) error {
 }
 
 func insertIntoDB(key, description, defaultValue, modifiedValue string) error {
-	db, err := sql.Open("sqlite3", "main.db")
+	db, err := sql.Open("sqlite3", dbName)
 	if err != nil {
 		return err
 	}
@@ -190,7 +192,7 @@ func updateProperty(c echo.Context) error {
 }
 
 func updateDB(id int, key, description, defaultValue, modifiedValue string) error {
-	db, err := sql.Open("sqlite3", "main.db")
+	db, err := sql.Open("sqlite3", dbName)
 	if err != nil {
 		return err
 	}
@@ -223,7 +225,7 @@ func getPropertyByID(c echo.Context) error {
 }
 
 func getRecordByID(id int) (*Property, error) {
-	db, err := sql.Open("sqlite3", "main.db")
+	db, err := sql.Open("sqlite3", dbName)
 	if err != nil {
 		return nil, err
 	}
