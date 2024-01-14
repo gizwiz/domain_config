@@ -49,7 +49,7 @@ func main() {
 		}
 
 		// Use the properties templ to render the HTML table
-		return c.Render(http.StatusOK, "", properties(props, keyFilter))
+		return c.Render(http.StatusOK, "", properties_page(props, keyFilter))
 	})
 
 	e.GET("/property/:id", getPropertyByID)
