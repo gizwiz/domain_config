@@ -8,7 +8,7 @@ Assuming here that sqlite3 is already installed. On mac this can be done using `
     go install -tags 'sqlite3' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
     cd domain_config
-    migrate -path database/migration/ -database "sqlite3://main2.db" -verbose up
+    migrate -path database/migration/ -database "sqlite3://main.db" -verbose up
 
 ## Optionally example data can be imported:
 

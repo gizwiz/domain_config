@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/a-h/templ"
+	"github.com/gizwiz/domain_config/database"
 	"github.com/labstack/echo/v4"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pkg/errors"
@@ -34,6 +35,13 @@ func (t *TemplRender) Render(w io.Writer, name string, data interface{}, c echo.
 }
 
 func main() {
+	{
+		err := database.ApplyLatestDBMigrations(dbName)
+		if err != nil {
+			log.Fatalf("Can not migrate the DB: %+v", err)
+		}
+	}
+
 	// Create a new instance of Echo
 	e := echo.New()
 

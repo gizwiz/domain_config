@@ -1,4 +1,4 @@
-main.db
+*.db
 *_templ.go
 tools
 internal_notes.txt
