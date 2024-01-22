@@ -1,10 +1,12 @@
-package main
+package views
 
 import (
 	"strconv"
+
+  "github.com/gizwiz/domain_config/models"
 )
 
-templ properties_page(data []PropertyValue, keyFilter string) {
+templ PropertiesPage(data []models.PropertyValue, keyFilter string) {
 	<html>
 		<head>
 			@style()
@@ -195,6 +197,19 @@ templ scripts() {
                         handled = true;
                     }
                     break;
+                case 'c':
+                    if (activeElement.tagName === 'TR') {
+                        // c to calculate all properties
+                        event.preventDefault();
+                        fetch('/calculate' )
+                            .then(response => response.json())
+                            // .then(data => {
+                            //     showEditForm('update', data.id, data.key, data.description, data.default_value, data.modified_value);
+                            // })
+                            .catch(error => console.error('Error calculating properties', error));
+                        handled = true;
+                    }
+                    break;
             }
 
             if (handled) {
@@ -215,7 +230,7 @@ templ scripts() {
  </script>
 }
 
-templ properties(data []PropertyValue, keyFilter string) {
+templ properties(data []models.PropertyValue, keyFilter string) {
 	// filter the property list
 	<form action="/properties" method="get">
 		<input type="text" id="filterInput" name="keyFilter" value={ keyFilter } placeholder="Search for keys..."/>
@@ -233,15 +248,15 @@ templ properties(data []PropertyValue, keyFilter string) {
 		</thead>
 		<tbody>
 			for _, item := range data {
-				<tr tabindex="0" data-id={ strconv.Itoa(item.id) }>
-					<td>{ item.key }</td>
-					if item.description.Valid {
-						<td>{ item.description.String }</td>
+				<tr tabindex="0" data-id={ strconv.Itoa(item.ID) }>
+					<td>{ item.Key }</td>
+					if item.Description.Valid {
+						<td>{ item.Description.String }</td>
 					} else {
 						<td></td>
 					}
-					if item.value.Valid {
-						<td>{ item.value.String }</td>
+					if item.Value.Valid {
+						<td>{ item.Value.String }</td>
 					} else {
 						<td></td>
 					}
