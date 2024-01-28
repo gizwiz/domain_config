@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"database/sql"
+	"fmt"
+	"github.com/expr-lang/expr"
 	"net/http"
 
 	"github.com/gizwiz/domain_config/database"
@@ -31,7 +33,8 @@ func CalculateProperties(dbName string, c echo.Context) error {
 	}
 
 	// Then redirect to the same URL, effectively reloading the page
-	return c.Redirect(http.StatusFound, c.Request().RequestURI)
+	//return c.Redirect(http.StatusFound, c.Request().RequestURI)
+	return c.JSON(http.StatusFound, nil) //todo not very useful to return nothing, we still need to refresh the page (the CalculatePropertiess)
 }
 
 func calculateNoneFunctionPropertiesDB(db *sql.DB) error {
@@ -55,9 +58,43 @@ func calculateNoneFunctionPropertiesDB(db *sql.DB) error {
 	return nil
 }
 
+type Env struct {
+	Calculations map[string]string
+	db           *sql.DB
+}
+
+func (Env) Sprintf(format string, a ...any) string {
+	return fmt.Sprintf(format, a...)
+}
+
+func (env *Env) Get(key string) (string, error) {
+	if calculated, ok := env.Calculations[key]; ok {
+		return calculated, nil
+	}
+
+	// not in env yet, so get it from the db
+	property, err := database.GetPropertyByKey(env.db, key)
+	if err != nil {
+		return "", errors.Wrapf(err, "can not get property for key %s", key) //todo can we return errors?
+	}
+
+	var calculatedValue string
+	if property.CalculatedValue.Valid {
+		calculatedValue = property.CalculatedValue.String
+	} else {
+		calculatedValue, err = calculateProperty(property, env)
+		if err != nil {
+			return "", errors.Wrapf(err, "can not calculateProperty %v", property)
+		}
+	}
+	env.Calculations[key] = calculatedValue
+
+	return calculatedValue, nil
+}
+
 func calculateFunctionPropertiesDB(db *sql.DB) error {
 
-	// todo loop through all formula properties and calculate them compiling the expressions
+	// loop through all formula properties and calculate them compiling the expressions
 	rows, err := db.Query("select id, key, description, default_value, modified_value from properties where calculated_value is NULL")
 	if err != nil {
 		return errors.Wrap(err, "can not select none-calculated properties")
@@ -76,10 +113,20 @@ func calculateFunctionPropertiesDB(db *sql.DB) error {
 	}
 	rows.Close()
 
+	env := Env{
+		Calculations: map[string]string{
+			// property.Key: property,
+		},
+		db: db,
+	}
+
 	// Now iterate over the slice of properties to update them
 	for _, p := range properties {
-		// todo implement using expr-engine
-		if err := database.UpdatePropertyCalculatedValue(db, p.ID, "CALCULATED"); err != nil {
+		calculatedValue, err := env.Get(p.Key)
+		if err != nil {
+			return errors.Wrapf(err, "can not calculate property value %+v", p)
+		}
+		if err := database.UpdatePropertyCalculatedValue(db, p.ID, calculatedValue); err != nil {
 			return errors.Wrap(err, "can not update calculate_value in none-calculated properties")
 		}
 	}
@@ -89,4 +136,19 @@ func calculateFunctionPropertiesDB(db *sql.DB) error {
 	}
 
 	return nil
+}
+
+func calculateProperty(property *models.Property, env *Env) (string, error) {
+	code := property.DefaultValue.String[1:]
+	program, err := expr.Compile(code, expr.Env(env))
+	if err != nil {
+		return "", errors.Wrapf(err, "can not expr.compile %s", property.DefaultValue.String[1:])
+	}
+
+	output, err := expr.Run(program, env)
+	if err != nil {
+		return "", errors.Wrapf(err, "can not expr.compile %s", property.DefaultValue.String[1:])
+	}
+
+	return fmt.Sprintf("%s", output), nil
 }

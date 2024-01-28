@@ -15,20 +15,22 @@ type PropertyValue struct {
 
 // Property represents a row in the properties table
 type Property struct {
-	ID            int            `json:"id"`
-	Key           string         `json:"key"`
-	Description   sql.NullString `json:"-"`
-	DefaultValue  sql.NullString `json:"-"`
-	ModifiedValue sql.NullString `json:"-"`
+	ID              int            `json:"id"`
+	Key             string         `json:"key"`
+	Description     sql.NullString `json:"-"`
+	DefaultValue    sql.NullString `json:"-"`
+	ModifiedValue   sql.NullString `json:"-"`
+	CalculatedValue sql.NullString `json:"-"`
 }
 
 // PropertyJSON is a struct used for custom JSON marshaling.
 type PropertyJSON struct {
-	ID            int    `json:"id"`
-	Key           string `json:"key"`
-	Description   string `json:"description,omitempty"`
-	DefaultValue  string `json:"default_value,omitempty"`
-	ModifiedValue string `json:"modified_value,omitempty"`
+	ID              int    `json:"id"`
+	Key             string `json:"key"`
+	Description     string `json:"description,omitempty"`
+	DefaultValue    string `json:"default_value,omitempty"`
+	ModifiedValue   string `json:"modified_value,omitempty"`
+	CalculatedValue string `json:"calculated_value,omitempty"`
 }
 
 // MarshalJSON customizes the JSON output.
@@ -46,6 +48,9 @@ func (p Property) MarshalJSON() ([]byte, error) {
 	}
 	if p.ModifiedValue.Valid {
 		j.ModifiedValue = p.ModifiedValue.String
+	}
+	if p.CalculatedValue.Valid {
+		j.CalculatedValue = p.CalculatedValue.String
 	}
 
 	return json.Marshal(j)

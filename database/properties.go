@@ -62,8 +62,8 @@ func GetPropertyByID(dbName string, id int) (*models.Property, error) {
 	defer db.Close()
 
 	var prop models.Property
-	query := "SELECT id, key, description, default_value, modified_value FROM properties where id = ?"
-	err = db.QueryRow(query, id).Scan(&prop.ID, &prop.Key, &prop.Description, &prop.DefaultValue, &prop.ModifiedValue)
+	query := "SELECT id, key, description, default_value, modified_value, calculated_value FROM properties where id = ?"
+	err = db.QueryRow(query, id).Scan(&prop.ID, &prop.Key, &prop.Description, &prop.DefaultValue, &prop.ModifiedValue, &prop.CalculatedValue)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -72,5 +72,19 @@ func GetPropertyByID(dbName string, id int) (*models.Property, error) {
 	}
 
 	return &prop, nil
+}
 
+func GetPropertyByKey(db *sql.DB, key string) (*models.Property, error) {
+
+	var prop models.Property
+	query := "SELECT id, key, description, default_value, modified_value, calculated_value FROM properties where key = ?"
+	err := db.QueryRow(query, key).Scan(&prop.ID, &prop.Key, &prop.Description, &prop.DefaultValue, &prop.ModifiedValue, &prop.CalculatedValue)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &prop, nil
 }
