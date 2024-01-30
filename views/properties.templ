@@ -64,17 +64,20 @@ templ scripts() {
           }, true); // Use capture to ensure the event is detected
         });
 
-        // when a page is loaded, restore the focus if an ID is stored
-        var focusedRowId = localStorage.getItem('focusedRow');
-        if (focusedRowId) {
-          var rowToFocus = document.querySelector('#properties tbody tr[data-id="' + focusedRowId + '"]');
-          if (rowToFocus) {
-            rowToFocus.focus(); // Focus the row
-            // Optional: scroll into view
-            rowToFocus.scrollIntoView();
-          }
+        function refocus() {
+            var focusedRowId = localStorage.getItem('focusedRow');
+            if (focusedRowId) {
+              var rowToFocus = document.querySelector('#properties tbody tr[data-id="' + focusedRowId + '"]');
+              if (rowToFocus) {
+                rowToFocus.focus(); // Focus the row
+                // Optional: scroll into view
+                rowToFocus.scrollIntoView();
+              }
+            }
         }
 
+        // when a page is loaded, restore the focus if an ID is stored
+        refocus()
 
         // edit form for a property
         var editForm = document.getElementById('editForm');
@@ -101,6 +104,10 @@ templ scripts() {
             editKeyInput.focus();
         }
 
+        function hideEditForm() {
+            document.getElementById('editForm').style.display = 'none';
+        }
+
         function isInputActive() {
             var activeElement = document.activeElement;
             return activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA';
@@ -121,7 +128,7 @@ templ scripts() {
 
         // Combined event listener for all keydown events
         document.addEventListener('keydown', function(event) {
-            if (isInputActive()) {
+            if (isInputActive() && event.key !== 'Escape') {
                 return; // Exit early if an input or textarea is active
             }
 
@@ -137,6 +144,8 @@ templ scripts() {
                 case 'Escape':
                     event.preventDefault();
                     toggleHelpScreen(false);
+                    hideEditForm();
+                    refocus();
                     break;
 
                 case 'Tab':
@@ -229,6 +238,8 @@ templ scripts() {
 }
 
 templ properties(data []models.PropertyValue, keyFilter string) {
+    // help screen
+    @helpScreen()
 	// filter the property list
 	<form action="/properties" method="get">
 		<input type="text" id="filterInput" name="keyFilter" value={ keyFilter } placeholder="Search for keys..."/>
@@ -281,10 +292,12 @@ templ helpScreen() {
 	<div id="helpScreen" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0, 0, 0, 0.5);">
 		<div style="background:white; margin:10% auto; padding:20px; width:50%;">
 			<h2>Keyboard Shortcuts</h2>
-			<p><strong>ctrl-f:</strong> go to the FilterKey field. Here you can edit and enter to do the filter.</p>
+			<p><strong>ctrl-f:</strong> go to the "Search for keys" field, to filter out specific property keys, using % wildcards such as in a database.</p>
 			<p><strong>n:</strong> Create new record</p>
 			<p><strong>e:</strong> Edit selected record</p>
+			<p><strong>c:</strong> Recalculate all properties</p>
 			<p><strong>?:</strong> Show this help screen</p>
+			<p><strong>Escape:</strong> hide Edit form (cfr e/n keys), hide Help screen</p>
 			<!-- Add more shortcuts as needed -->
 			<button onclick="document.getElementById('helpScreen').style.display='none'">Close</button>
 		</div>
