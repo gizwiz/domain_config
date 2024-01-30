@@ -20,15 +20,19 @@ func FetchProperties(dbName string, keyFilter string, modifiedOnly bool) ([]mode
 	}
 	defer db.Close()
 
-	query := "SELECT id, key, description, calculated_value value FROM properties "
+	whereClause := []string{}
+	query := "SELECT id, key, description, calculated_value value FROM properties"
 	if keyFilter != "" {
-		query += "WHERE Key like ?"
-		if modifiedOnly {
-			query += " AND modified_value <> ''"
-		}
-	} else {
-		if modifiedOnly {
-			query += "WHERE modified_value <> ''"
+		whereClause = append(whereClause, "key like ?")
+	}
+	if modifiedOnly {
+		whereClause = append(whereClause, "modified_value != ''")
+	}
+	for index, filter := range whereClause {
+		if index == 0 {
+			query += " WHERE " + filter
+		} else {
+			query += " AND " + filter
 		}
 	}
 	log.Printf("query: %s, filter: %s, modifiedOnly: %v\n", query, keyFilter, modifiedOnly)
