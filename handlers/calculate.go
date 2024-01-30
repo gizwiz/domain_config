@@ -8,6 +8,7 @@ import (
 	"github.com/gizwiz/domain_config/models"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
+	"log"
 )
 
 func CalculateProperties(dbName string, c echo.Context) error {
@@ -135,6 +136,7 @@ func calculateFunctionPropertiesDB(db *sql.DB) error {
 }
 
 func calculateProperty(property *models.Property, env *Env) (string, error) {
+	log.Printf("calculate: %s started", property.Key)
 	code := property.DefaultValue.String[1:]
 	program, err := expr.Compile(code, expr.Env(env))
 	if err != nil {
@@ -146,5 +148,6 @@ func calculateProperty(property *models.Property, env *Env) (string, error) {
 		return "", errors.Wrapf(err, "can not expr.compile %s", property.DefaultValue.String[1:])
 	}
 
+	log.Printf("calculate: %s -> %s done", property.Key, output)
 	return fmt.Sprintf("%s", output), nil
 }

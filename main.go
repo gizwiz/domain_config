@@ -81,6 +81,9 @@ func mainWithErrors() error {
 		return handlers.UpdateProperty(dbName, c)
 	})
 
+	e.GET("/export", func(c echo.Context) error {
+		return handlers.ExportTablesToJson(dbName, c)
+	})
 	// Start the server
 	err := e.Start(":8080")
 	if err != nil {
