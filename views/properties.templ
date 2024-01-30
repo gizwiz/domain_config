@@ -203,10 +203,8 @@ templ scripts() {
                         event.preventDefault();
                         fetch('/calculate' )
                             .then(response => response.json())
-                            // .then(data => {
-                            //     showEditForm('update', data.id, data.key, data.description, data.default_value, data.modified_value);
-                            // })
                             .catch(error => console.error('Error calculating properties', error));
+                        window.location.reload()
                         handled = true;
                     }
                     break;

@@ -84,8 +84,9 @@ func mainWithErrors() error {
 	// Start the server
 	err := e.Start(":8080")
 	if err != nil {
-		//return errors.Wrapf(err, "can not start echo server")
-		e.Logger.Fatal(e.Start(":8080"))
+		return errors.Wrapf(err, "can not start echo server")
+		//e.Logger.Fatal(e.Start(":8080"))
 	}
+
 	return nil
 }

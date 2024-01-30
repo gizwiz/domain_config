@@ -51,8 +51,12 @@ func InsertProperty(dbName string, c echo.Context) error {
 	// Insert logic here
 	err := database.InsertProperty(dbName, key, description, defaultValue, modifiedValue)
 	if err != nil {
-		log.Println("Error inserting Properties:", err)
-		return err
+		return errors.Wrapf(err, "can not inset property %s", key)
+	}
+
+	err = CalculateProperties(dbName, c)
+	if err != nil {
+		return errors.Wrapf(err, "can not calculate properties after inset property %s", key)
 	}
 
 	return c.Redirect(http.StatusFound, "/properties")
@@ -71,10 +75,13 @@ func UpdateProperty(dbName string, c echo.Context) error {
 	// Update logic here
 	err = database.UpdateProperty(dbName, id, key, description, defaultValue, modifiedValue)
 	if err != nil {
-		log.Println("Error updating Properties:", err)
-		return err
+		return errors.Wrapf(err, "can not updat property %s", key)
 	}
 
+	err = CalculateProperties(dbName, c)
+	if err != nil {
+		return errors.Wrapf(err, "can not calculate properties after inset property %s", key)
+	}
 	return c.Redirect(http.StatusFound, "/properties")
 }
 

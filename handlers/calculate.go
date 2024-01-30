@@ -4,8 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/expr-lang/expr"
-	"net/http"
-
 	"github.com/gizwiz/domain_config/database"
 	"github.com/gizwiz/domain_config/models"
 	"github.com/labstack/echo/v4"
@@ -32,9 +30,7 @@ func CalculateProperties(dbName string, c echo.Context) error {
 		return errors.Wrapf(err, "can not calculate function properties")
 	}
 
-	// Then redirect to the same URL, effectively reloading the page
-	//return c.Redirect(http.StatusFound, c.Request().RequestURI)
-	return c.JSON(http.StatusFound, nil) //todo not very useful to return nothing, we still need to refresh the page (the CalculatePropertiess)
+	return nil
 }
 
 func calculateNoneFunctionPropertiesDB(db *sql.DB) error {
