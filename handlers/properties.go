@@ -13,17 +13,25 @@ import (
 )
 
 // Fetch all rows from the Property table
-func FetchProperties(dbName string, keyFilter string) ([]models.PropertyValue, error) {
+func FetchProperties(dbName string, keyFilter string, modifiedOnly bool) ([]models.PropertyValue, error) {
 	db, err := sql.Open("sqlite3", dbName)
 	if err != nil {
 		return nil, err
 	}
 	defer db.Close()
 
-	query := "SELECT id, key, description, value FROM property_values"
+	query := "SELECT id, key, description, calculated_value value FROM properties "
 	if keyFilter != "" {
-		query += " WHERE Key like ?"
+		query += "WHERE Key like ?"
+		if modifiedOnly {
+			query += " AND modified_value <> ''"
+		}
+	} else {
+		if modifiedOnly {
+			query += "WHERE modified_value <> ''"
+		}
 	}
+	log.Printf("query: %s, filter: %s, modifiedOnly: %v\n", query, keyFilter, modifiedOnly)
 	rows, err := db.Query(query, keyFilter)
 	if err != nil {
 		return nil, err

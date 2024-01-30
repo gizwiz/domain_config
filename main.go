@@ -2,10 +2,6 @@ package main
 
 import (
 	"context"
-	"io"
-	"log"
-	"net/http"
-
 	"github.com/a-h/templ"
 	"github.com/gizwiz/domain_config/database"
 	"github.com/gizwiz/domain_config/handlers"
@@ -13,6 +9,10 @@ import (
 	"github.com/labstack/echo/v4"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pkg/errors"
+	"io"
+	"log"
+	"net/http"
+	"strconv"
 )
 
 const dbName = "main.db"
@@ -50,19 +50,30 @@ func mainWithErrors() error {
 
 	// Create a new instance of Echo
 	e := echo.New()
+	e.HideBanner = true
+	e.Debug = true
 
 	e.Renderer = &TemplRender{}
 
 	// display the key-value table
 	e.GET("/properties", func(c echo.Context) error {
 		keyFilter := c.QueryParam("keyFilter")
-		props, err := handlers.FetchProperties(dbName, keyFilter)
+		modifiedOnly := c.QueryParam("modifiedOnly")
+		modifiedOnlyB := false
+		var err error
+		if modifiedOnly != "" {
+			modifiedOnlyB, err = strconv.ParseBool(modifiedOnly)
+			if err != nil {
+				return errors.Wrap(err, "can not convert modifiedOnly to bool")
+			}
+		}
+		props, err := handlers.FetchProperties(dbName, keyFilter, modifiedOnlyB)
 		if err != nil {
 			return errors.Wrapf(err, "can not fetch properties")
 		}
 
 		// Use the properties templ to render the HTML table
-		return c.Render(http.StatusOK, "", views.PropertiesPage(props, keyFilter))
+		return c.Render(http.StatusOK, "", views.PropertiesPage(props, keyFilter, modifiedOnlyB))
 	})
 
 	e.GET("/calculate", func(c echo.Context) error {
