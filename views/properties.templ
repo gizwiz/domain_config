@@ -22,6 +22,9 @@ templ PropertiesPage(propertyValues []models.PropertyValue, keyFilter string, mo
 
 templ style() {
 	<style type="text/css">
+	body {
+	    font-family: monospace;
+	}
     table {
         font-family: monospace;
         width: 100%;
@@ -48,6 +51,14 @@ templ style() {
 
     #properties tbody tr:focus td:first-child {
         background-color: #e7f4ff; /* Light blue background for visual focus indication */
+    }
+
+    h2 {
+        background-color: #005A7C;
+        color: white;
+        font-size: 1.1em;
+        border: 1px solid #ddd;
+        padding: 8px;
     }
 
   form#propertyFilterForm {
@@ -230,6 +241,7 @@ templ scripts() {
                 case 'Escape':
                     event.preventDefault();
                     toggleHelpScreen(false);
+                    document.getElementById('new_property').style.display="none";
                     hideEditForm();
                     refocus();
                     break;
@@ -256,6 +268,7 @@ templ scripts() {
                 case 'n':
                     // New record mode
                     event.preventDefault();
+                    document.getElementById('new_property').style.display="";
                     showEditForm('insert');
                     handled = true;
                     break;
@@ -286,6 +299,7 @@ templ scripts() {
                         fetch('/property/' + id)
                             .then(response => response.json())
                             .then(data => {
+                                document.getElementById('new_property').style.display=""; // todo remove when showEditForm per row
                                 showEditForm('update', data.id, data.key, data.description, data.default_value, data.modified_value);
                             })
                             .catch(error => console.error('Error fetching property:', error));
@@ -336,36 +350,45 @@ templ properties(data []models.PropertyValue, keyFilter string, modifiedOnly boo
 	// help screen
 	@helpScreen()
 	// filter the property list
-	@propertyFilterForm(keyFilter, modifiedOnly, allTags, isSelectedTag)
-	// edit form for a single property
-	@propertyEditForm()
+	<div>
+		<h2>Filter</h2>
+		@propertyFilterForm(keyFilter, modifiedOnly, allTags, isSelectedTag)
+	</div>
+	<div id="new_property" style="display:none;">
+		<h2>New property</h2>
+		// edit form for a single property
+		@propertyEditForm()
+	</div>
 	// property list
-	<table id="properties">
-		<thead>
-			<tr>
-				<th>Key</th>
-				<th>Description</th>
-				<th>Value</th>
-			</tr>
-		</thead>
-		<tbody>
-			for _, item := range data {
-				<tr tabindex="0" data-id={ strconv.Itoa(item.ID) }>
-					<td>{ item.Key }</td>
-					if item.Description.Valid {
-						<td>{ item.Description.String }</td>
-					} else {
-						<td></td>
-					}
-					if item.Value.Valid {
-						<td>{ item.Value.String }</td>
-					} else {
-						<td></td>
-					}
+	<div>
+		<h2>Properties</h2>
+		<table id="properties">
+			<thead>
+				<tr>
+					<th>Key</th>
+					<th>Description</th>
+					<th>Value</th>
 				</tr>
-			}
-		</tbody>
-	</table>
+			</thead>
+			<tbody>
+				for _, item := range data {
+					<tr tabindex="0" data-id={ strconv.Itoa(item.ID) }>
+						<td>{ item.Key }</td>
+						if item.Description.Valid {
+							<td>{ item.Description.String }</td>
+						} else {
+							<td></td>
+						}
+						if item.Value.Valid {
+							<td>{ item.Value.String }</td>
+						} else {
+							<td></td>
+						}
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
 }
 
 templ propertyFilterForm(keyFilter string, isModifiedOnly bool, allTags []models.Tag, isSelectedTag models.StringPredicate) {
