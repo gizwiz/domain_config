@@ -1,0 +1,199 @@
+package views
+
+templ scripts() {
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var input = document.getElementById('filterInput');
+        var tableRows = document.querySelectorAll('#properties tbody tr');
+
+        // When a row is focused, store it's ID
+        tableRows.forEach(row => {
+          row.addEventListener('focus', function() {
+            localStorage.setItem('focusedRow', this.getAttribute('data-id'));
+          }, true); // Use capture to ensure the event is detected
+        });
+
+        function refocus() {
+            var focusedRowId = localStorage.getItem('focusedRow');
+            if (focusedRowId) {
+              var rowToFocus = document.querySelector('#properties tbody tr[data-id="' + focusedRowId + '"]');
+              if (rowToFocus) {
+                rowToFocus.focus(); // Focus the row
+                // Optional: scroll into view
+                rowToFocus.scrollIntoView();
+              }
+            }
+        }
+
+        // when a page is loaded, restore the focus if an ID is stored
+        refocus()
+
+        // edit form for a property
+        var editForm = document.getElementById('editForm');
+        var editModeInput = document.getElementById('editMode');
+        var editIdInput = document.getElementById('editID');
+        var editKeyInput = document.getElementById('editKey');
+        var editDescriptionInput = document.getElementById('editDescription')
+        var editDefaultValueInput = document.getElementById('editDefaultValue')
+        var editModifiedValueInput = document.getElementById('editModifiedValue')
+
+
+        function showEditForm(mode, id = -1, key = '', description = '', defaultValue = '', modifiedValue = '') {
+            var formAction = mode === 'insert' ? '/insert' : '/update';
+            editForm.setAttribute('action', formAction);
+
+            editModeInput.value = mode;
+            editIdInput.value = id;
+            editKeyInput.value = key;
+            editDescriptionInput.value = description;
+            editDefaultValueInput.value = defaultValue;
+            editModifiedValueInput.value = modifiedValue;
+
+            editForm.style.display = '';
+            editKeyInput.focus();
+        }
+
+        function hideEditForm() {
+            document.getElementById('editForm').style.display = 'none';
+        }
+
+        function isInputActive() {
+            var activeElement = document.activeElement;
+            return activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA';
+        }
+
+        function toggleHelpScreen(display) {
+            document.getElementById('helpScreen').style.display = display ? '' : 'none';
+        }
+
+        // Function to move focus to the next or previous row
+        function moveFocus(currentRow, offset) {
+            var currentIndex = Array.from(tableRows).indexOf(currentRow);
+            var nextIndex = currentIndex + offset;
+            if (nextIndex >= 0 && nextIndex < tableRows.length) {
+                tableRows[nextIndex].focus();
+            }
+        }
+
+        // Combined event listener for all keydown events
+        document.addEventListener('keydown', function(event) {
+            if (isInputActive() && event.key !== 'Escape') {
+                return; // Exit early if an input or textarea is active
+            }
+
+            var activeElement = document.activeElement;
+            var handled = false;
+
+            switch (event.key) {
+                case '?':
+                    event.preventDefault();
+                    toggleHelpScreen(true);
+                    break;
+
+                case 'Escape':
+                    event.preventDefault();
+                    toggleHelpScreen(false);
+                    document.getElementById('new_property').style.display="none";
+                    hideEditForm();
+                    refocus();
+                    break;
+
+                case 'Tab':
+                    if (activeElement === input) {
+                        // Tab to focus the first table row
+                        event.preventDefault();
+                        tableRows[0].focus();
+                        handled = true;
+                    }
+                    break;
+
+                case 'f':
+                    if (event.ctrlKey) {
+                        // Ctrl+F to focus the input
+                        event.preventDefault();
+                        input.focus();
+                        input.select();
+                        handled = true;
+                    }
+                    break;
+
+                case 'n':
+                    // New record mode
+                    event.preventDefault();
+                    document.getElementById('new_property').style.display="";
+                    showEditForm('insert');
+                    handled = true;
+                    break;
+
+                case 'ArrowUp':
+                case 'k':
+                    if (activeElement.tagName === 'TR') {
+                        event.preventDefault();
+                        moveFocus(activeElement, -1);
+                        handled = true;
+                    }
+                    break;
+
+                case 'ArrowDown':
+                case 'j':
+                    if (activeElement.tagName === 'TR') {
+                        event.preventDefault();
+                        moveFocus(activeElement, 1);
+                        handled = true;
+                    }
+                    break;
+
+                case 'e':
+                    if (activeElement.tagName === 'TR') {
+                        // e to edit the row
+                        event.preventDefault();
+                        var id = activeElement.dataset.id; // Assuming each row has a 'data-id' attribute
+                        fetch('/property/' + id)
+                            .then(response => response.json())
+                            .then(data => {
+                                document.getElementById('new_property').style.display=""; // todo remove when showEditForm per row
+                                showEditForm('update', data.id, data.key, data.description, data.default_value, data.modified_value);
+                            })
+                            .catch(error => console.error('Error fetching property:', error));
+                        handled = true;
+                    }
+                    break;
+                case 'c':
+                    if (activeElement.tagName === 'TR') {
+                        // c to calculate all properties
+                        event.preventDefault();
+                        fetch('/calculate' )
+                            .then(response => response.json())
+                            .catch(error => console.error('Error calculating properties', error));
+                        window.location.reload()
+                        handled = true;
+                    }
+                    break;
+            }
+
+            if (handled) {
+                // Stop the default action to prevent the browser from scrolling
+                event.stopPropagation();
+            }
+        });
+
+        document.getElementById('modifiedOnlyCheckbox').addEventListener('change', function() {
+            document.getElementById('modifiedOnly').value = this.checked ? 'true' : 'false';
+            document.getElementById('propertyFilterForm').submit();
+        });
+
+        document.getElementById('selectedTags').addEventListener('change', function() {
+            document.getElementById('propertyFilterForm').submit();
+        });
+
+        // Event listener to submit the form when Enter is pressed in the input
+        input.addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                this.form.submit();
+            }
+        });
+    });
+</script>
+}
+

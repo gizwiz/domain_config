@@ -20,374 +20,19 @@ templ PropertiesPage(propertyValues []models.PropertyValue, keyFilter string, mo
 	</html>
 }
 
-templ style() {
-	<style type="text/css">
-	body {
-	    font-family: monospace;
-	}
-    table {
-        font-family: monospace;
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    table, th, td {
-        border: 1px solid #ddd;
-    }
-
-    th {
-        background-color: #f2f2f2; /* Soft background color for headers */
-        text-align: left;
-        padding: 8px;
-    }
-
-    td {
-        padding: 8px;
-    }
-
-    td:first-child {
-        background-color: #f9f9f9; /* Soft background color for the key column */
-    }
-
-    #properties tbody tr:focus td:first-child {
-        background-color: #e7f4ff; /* Light blue background for visual focus indication */
-    }
-
-    h2 {
-        background-color: #005A7C;
-        color: white;
-        font-size: 1.1em;
-        border: 1px solid #ddd;
-        padding: 8px;
-    }
-
-  form#propertyFilterForm {
-    display: flex;
-    flex-direction: column;
-    max-width: 300px;
-    margin: 20px;
-  }
-  form#propertyFilterForm > div {
-    margin-bottom: 10px;
-  }
-  form#propertyFilterForm label {
-    margin-bottom: 5px;
-    display: block;
-  }
-  form#propertyFilterForm {
-    display: flex;
-    flex-direction: row; /* Changed to row */
-    max-width: 600px; /* Adjusted width */
-    margin: 20px;
-    align-items: flex-start; /* To align items at the start */
-  }
-
-  form#propertyFilterForm > .form-group-container {
-    display: flex;
-    flex-direction: column;
-    margin-right: 20px; /* Space between the container and Tags */
-  }
-
-  @media screen and (max-width: 600px) {
-    form#propertyFilterForm {
-      flex-direction: column;
-    }
-
-    form#propertyFilterForm > .form-group-container {
-      margin-right: 0;
-    }
-  }
-  form#propertyFilterForm .checkbox-group {
-    display: flex;
-    align-items: center;
-  }  
-  form#propertyFilterForm .checkbox-group input[type="checkbox"] {
-    margin-right: 10px; /* Adjust spacing between checkbox and label */
-  }
-  form#propertyFilterForm .tags-select {
-    display: flex;
-    flex-direction: column;
-  }
-  form#propertyFilterForm .tags-select label {
-    align-self: start;
-  }
-  form#propertyFilterForm .tags-select select {
-    align-self: start;
-  }
-
-  #editForm {
-      display: flex;
-      flex-direction: column;
-      max-width: 500px; /* Adjust as needed */
-      margin: 20px auto; /* Center the form */
-  }
-
-  #editForm .form-row {
-      margin-bottom: 15px;
-      display: flex;
-  }
-
-  #editForm .form-row label {
-      margin-right: 10px;
-      width: 150px; /* Adjust as needed */
-      text-align: right;
-  }
-
-  #editForm .form-row input[type="text"] {
-      flex-grow: 1; /* Allows input to take up remaining space */
-      padding: 5px;
-      border: 1px solid #ddd;
-  }
-
-  #editForm .form-row input[type="submit"] {
-      padding: 5px 15px;
-      border: 1px solid #ddd;
-      cursor: pointer;
-  }
-
-  </style>
-}
-
-templ scripts() {
-	<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var input = document.getElementById('filterInput');
-        var tableRows = document.querySelectorAll('#properties tbody tr');
-
-        // When a row is focused, store it's ID
-        tableRows.forEach(row => {
-          row.addEventListener('focus', function() {
-            localStorage.setItem('focusedRow', this.getAttribute('data-id'));
-          }, true); // Use capture to ensure the event is detected
-        });
-
-        function refocus() {
-            var focusedRowId = localStorage.getItem('focusedRow');
-            if (focusedRowId) {
-              var rowToFocus = document.querySelector('#properties tbody tr[data-id="' + focusedRowId + '"]');
-              if (rowToFocus) {
-                rowToFocus.focus(); // Focus the row
-                // Optional: scroll into view
-                rowToFocus.scrollIntoView();
-              }
-            }
-        }
-
-        // when a page is loaded, restore the focus if an ID is stored
-        refocus()
-
-        // edit form for a property
-        var editForm = document.getElementById('editForm');
-        var editModeInput = document.getElementById('editMode');
-        var editIdInput = document.getElementById('editID');
-        var editKeyInput = document.getElementById('editKey');
-        var editDescriptionInput = document.getElementById('editDescription')
-        var editDefaultValueInput = document.getElementById('editDefaultValue')
-        var editModifiedValueInput = document.getElementById('editModifiedValue')
-
-
-        function showEditForm(mode, id = -1, key = '', description = '', defaultValue = '', modifiedValue = '') {
-            var formAction = mode === 'insert' ? '/insert' : '/update';
-            editForm.setAttribute('action', formAction);
-
-            editModeInput.value = mode;
-            editIdInput.value = id;
-            editKeyInput.value = key;
-            editDescriptionInput.value = description;
-            editDefaultValueInput.value = defaultValue;
-            editModifiedValueInput.value = modifiedValue;
-
-            editForm.style.display = '';
-            editKeyInput.focus();
-        }
-
-        function hideEditForm() {
-            document.getElementById('editForm').style.display = 'none';
-        }
-
-        function isInputActive() {
-            var activeElement = document.activeElement;
-            return activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA';
-        }
-
-        function toggleHelpScreen(display) {
-            document.getElementById('helpScreen').style.display = display ? '' : 'none';
-        }
-        
-        // Function to move focus to the next or previous row
-        function moveFocus(currentRow, offset) {
-            var currentIndex = Array.from(tableRows).indexOf(currentRow);
-            var nextIndex = currentIndex + offset;
-            if (nextIndex >= 0 && nextIndex < tableRows.length) {
-                tableRows[nextIndex].focus();
-            }
-        }
-
-        // Combined event listener for all keydown events
-        document.addEventListener('keydown', function(event) {
-            if (isInputActive() && event.key !== 'Escape') {
-                return; // Exit early if an input or textarea is active
-            }
-
-            var activeElement = document.activeElement;
-            var handled = false;
-
-            switch (event.key) {
-                case '?':
-                    event.preventDefault();
-                    toggleHelpScreen(true);
-                    break;
-
-                case 'Escape':
-                    event.preventDefault();
-                    toggleHelpScreen(false);
-                    document.getElementById('new_property').style.display="none";
-                    hideEditForm();
-                    refocus();
-                    break;
-
-                case 'Tab':
-                    if (activeElement === input) {
-                        // Tab to focus the first table row
-                        event.preventDefault();
-                        tableRows[0].focus();
-                        handled = true;
-                    }
-                    break;
-
-                case 'f':
-                    if (event.ctrlKey) {
-                        // Ctrl+F to focus the input
-                        event.preventDefault();
-                        input.focus();
-                        input.select();
-                        handled = true;
-                    }
-                    break;
-
-                case 'n':
-                    // New record mode
-                    event.preventDefault();
-                    document.getElementById('new_property').style.display="";
-                    showEditForm('insert');
-                    handled = true;
-                    break;
-
-                case 'ArrowUp':
-                case 'k':
-                    if (activeElement.tagName === 'TR') {
-                        event.preventDefault();
-                        moveFocus(activeElement, -1);
-                        handled = true;
-                    }
-                    break;
-
-                case 'ArrowDown':
-                case 'j':
-                    if (activeElement.tagName === 'TR') {
-                        event.preventDefault();
-                        moveFocus(activeElement, 1);
-                        handled = true;
-                    }
-                    break;
-
-                case 'e':
-                    if (activeElement.tagName === 'TR') {
-                        // e to edit the row
-                        event.preventDefault();
-                        var id = activeElement.dataset.id; // Assuming each row has a 'data-id' attribute
-                        fetch('/property/' + id)
-                            .then(response => response.json())
-                            .then(data => {
-                                document.getElementById('new_property').style.display=""; // todo remove when showEditForm per row
-                                showEditForm('update', data.id, data.key, data.description, data.default_value, data.modified_value);
-                            })
-                            .catch(error => console.error('Error fetching property:', error));
-                        handled = true;
-                    }
-                    break;
-                case 'c':
-                    if (activeElement.tagName === 'TR') {
-                        // c to calculate all properties
-                        event.preventDefault();
-                        fetch('/calculate' )
-                            .then(response => response.json())
-                            .catch(error => console.error('Error calculating properties', error));
-                        window.location.reload()
-                        handled = true;
-                    }
-                    break;
-            }
-
-            if (handled) {
-                // Stop the default action to prevent the browser from scrolling
-                event.stopPropagation();
-            }
-        });
-
-        document.getElementById('modifiedOnlyCheckbox').addEventListener('change', function() {
-            document.getElementById('modifiedOnly').value = this.checked ? 'true' : 'false';
-            document.getElementById('propertyFilterForm').submit();
-        });
-
-        document.getElementById('selectedTags').addEventListener('change', function() {
-            document.getElementById('propertyFilterForm').submit();
-        });
-
-        // Event listener to submit the form when Enter is pressed in the input
-        input.addEventListener('keyup', function(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                this.form.submit();
-            }
-        });
-    });
-
- </script>
-}
-
 templ properties(data []models.PropertyValue, keyFilter string, modifiedOnly bool, allTags []models.Tag, isSelectedTag models.StringPredicate) {
-	// help screen
 	@helpScreen()
-	// filter the property list
 	<div>
 		<h2>Filter</h2>
 		@propertyFilterForm(keyFilter, modifiedOnly, allTags, isSelectedTag)
 	</div>
 	<div id="new_property" style="display:none;">
-		<h2>New property</h2>
-		// edit form for a single property
+		<h2>Add new property</h2>
 		@propertyEditForm()
 	</div>
-	// property list
 	<div>
 		<h2>Properties</h2>
-		<table id="properties">
-			<thead>
-				<tr>
-					<th>Key</th>
-					<th>Description</th>
-					<th>Value</th>
-				</tr>
-			</thead>
-			<tbody>
-				for _, item := range data {
-					<tr tabindex="0" data-id={ strconv.Itoa(item.ID) }>
-						<td>{ item.Key }</td>
-						if item.Description.Valid {
-							<td>{ item.Description.String }</td>
-						} else {
-							<td></td>
-						}
-						if item.Value.Valid {
-							<td>{ item.Value.String }</td>
-						} else {
-							<td></td>
-						}
-					</tr>
-				}
-			</tbody>
-		</table>
+		@propertyList(data)
 	</div>
 }
 
@@ -441,7 +86,7 @@ templ propertyEditForm() {
 		</div>
 		<div class="form-row">
 			<label for="editDefaultValue">Default Value:</label>
-			<input type="text" id="editDefaultValue" name="defaultValue" placeholder="start with = for formula"/>
+			<input type="text" id="editDefaultValue" name="defaultValue" placeholder="put a constant, or start with = for a formula"/>
 		</div>
 		<div class="form-row">
 			<label for="editModifiedValue">Modified Value:</label>
@@ -451,6 +96,35 @@ templ propertyEditForm() {
 			<input type="submit" value="Submit"/>
 		</div>
 	</form>
+}
+
+templ propertyList(data []models.PropertyValue) {
+	<table id="properties">
+		<thead>
+			<tr>
+				<th>Key</th>
+				<th>Description</th>
+				<th>Value</th>
+			</tr>
+		</thead>
+		<tbody>
+			for _, item := range data {
+				<tr tabindex="0" data-id={ strconv.Itoa(item.ID) }>
+					<td>{ item.Key }</td>
+					if item.Description.Valid {
+						<td>{ item.Description.String }</td>
+					} else {
+						<td></td>
+					}
+					if item.Value.Valid {
+						<td>{ item.Value.String }</td>
+					} else {
+						<td></td>
+					}
+				</tr>
+			}
+		</tbody>
+	</table>
 }
 
 templ helpScreen() {

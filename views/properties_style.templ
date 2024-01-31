@@ -1,0 +1,130 @@
+package views
+
+templ style() {
+	<style type="text/css">
+	body {
+	    font-family: monospace;
+	}
+    table {
+        font-family: monospace;
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    table, th, td {
+        border: 1px solid #ddd;
+    }
+
+    th {
+        background-color: #f2f2f2; /* Soft background color for headers */
+        text-align: left;
+        padding: 8px;
+    }
+
+    td {
+        padding: 8px;
+    }
+
+    td:first-child {
+        background-color: #f9f9f9; /* Soft background color for the key column */
+    }
+
+    #properties tbody tr:focus td:first-child {
+        background-color: #e7f4ff; /* Light blue background for visual focus indication */
+    }
+
+    h2 {
+        background-color: #005A7C;
+        color: white;
+        font-size: 1.1em;
+        border: 1px solid #ddd;
+        padding: 8px;
+    }
+
+  form#propertyFilterForm {
+    display: flex;
+    flex-direction: column;
+    max-width: 300px;
+    margin: 20px;
+  }
+  form#propertyFilterForm > div {
+    margin-bottom: 10px;
+  }
+  form#propertyFilterForm label {
+    margin-bottom: 5px;
+    display: block;
+  }
+  form#propertyFilterForm {
+    display: flex;
+    flex-direction: row; /* Changed to row */
+    max-width: 600px; /* Adjusted width */
+    margin: 20px;
+    align-items: flex-start; /* To align items at the start */
+  }
+
+  form#propertyFilterForm > .form-group-container {
+    display: flex;
+    flex-direction: column;
+    margin-right: 20px; /* Space between the container and Tags */
+  }
+
+  @media screen and (max-width: 600px) {
+    form#propertyFilterForm {
+      flex-direction: column;
+    }
+
+    form#propertyFilterForm > .form-group-container {
+      margin-right: 0;
+    }
+  }
+  form#propertyFilterForm .checkbox-group {
+    display: flex;
+    align-items: center;
+  }
+  form#propertyFilterForm .checkbox-group input[type="checkbox"] {
+    margin-right: 10px; /* Adjust spacing between checkbox and label */
+  }
+  form#propertyFilterForm .tags-select {
+    display: flex;
+    flex-direction: column;
+  }
+  form#propertyFilterForm .tags-select label {
+    align-self: start;
+  }
+  form#propertyFilterForm .tags-select select {
+    align-self: start;
+  }
+
+  #editForm {
+      display: flex;
+      flex-direction: column;
+      max-width: 800px; /* Adjust as needed */
+      margin: 20px auto; /* Center the form */
+  }
+
+  #editForm .form-row {
+      margin-bottom: 15px;
+      display: flex;
+  }
+
+  #editForm .form-row label {
+      margin-right: 10px;
+      width: 150px; /* Adjust as needed */
+      text-align: right;
+  }
+
+  #editForm .form-row input[type="text"] {
+      flex-grow: 1; /* Allows input to take up remaining space */
+      padding: 5px;
+      border: 1px solid #ddd;
+  }
+
+  #editForm .form-row input[type="submit"] {
+      padding: 5px 15px;
+      border: 1px solid #ddd;
+      cursor: pointer;
+  }
+
+  </style>
+}
+
