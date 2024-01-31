@@ -63,8 +63,28 @@ templ style() {
     margin-bottom: 5px;
     display: block;
   }
-  form#propertyFilterForm .form-group {
-    margin-bottom: 15px;
+  form#propertyFilterForm {
+    display: flex;
+    flex-direction: row; /* Changed to row */
+    max-width: 600px; /* Adjusted width */
+    margin: 20px;
+    align-items: flex-start; /* To align items at the start */
+  }
+
+  form#propertyFilterForm > .form-group-container {
+    display: flex;
+    flex-direction: column;
+    margin-right: 20px; /* Space between the container and Tags */
+  }
+
+  @media screen and (max-width: 600px) {
+    form#propertyFilterForm {
+      flex-direction: column;
+    }
+
+    form#propertyFilterForm > .form-group-container {
+      margin-right: 0;
+    }
   }
   form#propertyFilterForm .checkbox-group {
     display: flex;
@@ -319,21 +339,23 @@ templ properties(data []models.PropertyValue, keyFilter string, modifiedOnly boo
 
 templ propertyFilterForm(keyFilter string, isModifiedOnly bool, allTags []models.Tag, isSelectedTag models.StringPredicate) {
 	<form id="propertyFilterForm" action="/properties" method="get">
-		<div class="form-group">
-			<label for="keyFilter">Key Filter</label>
-			<input type="text" id="filterInput" name="keyFilter" value={ keyFilter }/>
-		</div>
-		<div class="form-group checkbox-group">
-			<input type="hidden" id="modifiedOnly" name="modifiedOnly" value="false"/>
-			<input
-				type="checkbox"
-				id="modifiedOnlyCheckbox"
-				value="{isModifiedOnly}"
-				if isModifiedOnly {
-					checked
-				}
-			/>
-			<label for="modifiedOnlyCheckbox">Modified Only</label>
+		<div class="form-group-container">
+			<div class="form-group">
+				<label for="keyFilter">Key Filter</label>
+				<input type="text" id="filterInput" name="keyFilter" value={ keyFilter }/>
+			</div>
+			<div class="form-group checkbox-group">
+				<input type="hidden" id="modifiedOnly" name="modifiedOnly" value="false"/>
+				<input
+					type="checkbox"
+					id="modifiedOnlyCheckbox"
+					value="{isModifiedOnly}"
+					if isModifiedOnly {
+						checked
+					}
+				/>
+				<label for="modifiedOnlyCheckbox">Modified Only</label>
+			</div>
 		</div>
 		<div class="form-group tags-select">
 			<label for="selectedTags">Tags</label>
