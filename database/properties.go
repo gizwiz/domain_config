@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/gizwiz/domain_config/models"
-	"log"
 )
 
 // Fetch rows from the Property table depending on the specific filter setting arguments
@@ -25,11 +24,6 @@ func FetchProperties(dbName string, keyFilter string, modifiedOnly bool, selecte
 		whereClause = append(whereClause, "p.modified_value != ''")
 	}
 	if len(selectedTags) > 0 {
-		//// tag or tag or tag...
-		//query += " join property_tags pt on p.id = pt.property_id join tags t on pt.tag_id = t.id"
-		//selectedTagList := strings.Join(selectedTags, ",")
-		//whereClause = append(whereClause, fmt.Sprintf("t.ID in (%s)", selectedTagList))
-
 		// tag and tag and tag
 		for idx, selectedTag := range selectedTags {
 			query += fmt.Sprintf(" join property_tags pt%[1]d on p.id = pt%[1]d.property_id join tags t%[1]d on pt%[1]d.tag_id = t%[1]d.id", idx)
@@ -45,7 +39,7 @@ func FetchProperties(dbName string, keyFilter string, modifiedOnly bool, selecte
 		}
 	}
 
-	log.Printf("query: %s", query)
+	//log.Printf("query: %s", query)
 	rows, err := db.Query(query, keyFilter)
 	if err != nil {
 		return nil, err
