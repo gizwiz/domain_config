@@ -25,12 +25,12 @@ templ style() {
         padding: 8px;
     }
 
-    td:first-child {
-        background-color: #f9f9f9; /* Soft background color for the key column */
+    #properties tbody tr:focus {
+        background-color: #e7f4ff; /* Light blue background for visual focus indication */
     }
 
-    #properties tbody tr:focus td:first-child {
-        background-color: #e7f4ff; /* Light blue background for visual focus indication */
+    .active-row {
+        background-color: #e7f4ff;
     }
 
     h2 {

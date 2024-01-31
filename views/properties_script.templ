@@ -38,7 +38,7 @@ templ scripts() {
         var editModifiedValueInput = document.getElementById('editModifiedValue')
 
 
-        function showEditForm(mode, id = -1, key = '', description = '', defaultValue = '', modifiedValue = '') {
+        function showEditForm(mode, id = -1, key = '', description = '', defaultValue = '', modifiedValue = '', activeRow) {
             var formAction = mode === 'insert' ? '/insert' : '/update';
             editForm.setAttribute('action', formAction);
 
@@ -49,12 +49,51 @@ templ scripts() {
             editDefaultValueInput.value = defaultValue;
             editModifiedValueInput.value = modifiedValue;
 
-            editForm.style.display = '';
+            // Move the form to the active row's position in "edit" mode, not for a new property
+            if (mode !== 'insert') {
+                // Create a new row and a cell that spans all columns
+                var newRow = document.createElement('tr');
+                var newCell = document.createElement('td');
+                var colSpan = activeRow.children.length; // Assuming the row has 'td' elements
+                newCell.colSpan = colSpan;
+
+                // Append the form to the new cell, and the cell to the new row
+                newCell.appendChild(editForm);
+                newRow.appendChild(newCell);
+
+                // Insert the new row after the active row
+                activeRow.after(newRow);
+
+                // add the active class to the row
+                activeRow.classList.add('active-row')
+            }
+
+            editForm.style.display = 'block';
             editKeyInput.focus();
         }
 
         function hideEditForm() {
             document.getElementById('editForm').style.display = 'none';
+            var editFormParent = editForm.parentNode;
+
+            // Move the form back to its original location
+            var originalLocation = document.getElementById('new_property');
+            if (originalLocation) {
+                originalLocation.appendChild(editForm);
+            }
+            // Check if the form is inside a <td> and <tr>
+            if (editFormParent && editFormParent.nodeName === 'TD') {
+                var editFormRow = editFormParent.parentNode;
+                if (editFormRow && editFormRow.nodeName === 'TR') {
+                    // Remove the entire row
+                    editFormRow.remove();
+                }
+            }
+            // Remove active class from all rows
+            var rows = document.querySelectorAll('#properties tbody tr');
+            rows.forEach(function(row) {
+                row.classList.remove('active-row');
+            });
         }
 
         function isInputActive() {
@@ -151,8 +190,7 @@ templ scripts() {
                         fetch('/property/' + id)
                             .then(response => response.json())
                             .then(data => {
-                                document.getElementById('new_property').style.display=""; // todo remove when showEditForm per row
-                                showEditForm('update', data.id, data.key, data.description, data.default_value, data.modified_value);
+                                showEditForm('update', data.id, data.key, data.description, data.default_value, data.modified_value, activeElement);
                             })
                             .catch(error => console.error('Error fetching property:', error));
                         handled = true;
