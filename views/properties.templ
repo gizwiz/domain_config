@@ -410,19 +410,19 @@ templ propertyEditForm() {
 		<input type="hidden" id="editID" name="id" value="1"/>
 		<div class="form-row">
 			<label for="editKey">Key:</label>
-			<input type="text" id="editKey" name="key" value=""/>
+			<input type="text" id="editKey" name="key" value="" placeholder="The key should be unique, so prefix with the component!"/>
 		</div>
 		<div class="form-row">
 			<label for="editDescription">Description:</label>
-			<input type="text" id="editDescription" name="description" placeholder="description"/>
+			<input type="text" id="editDescription" name="description" placeholder="Put a clear description here"/>
 		</div>
 		<div class="form-row">
 			<label for="editDefaultValue">Default Value:</label>
-			<input type="text" id="editDefaultValue" name="defaultValue" placeholder="default value"/>
+			<input type="text" id="editDefaultValue" name="defaultValue" placeholder="start with = for formula"/>
 		</div>
 		<div class="form-row">
 			<label for="editModifiedValue">Modified Value:</label>
-			<input type="text" id="editModifiedValue" name="modifiedValue" placeholder="value specific for this domain"/>
+			<input type="text" id="editModifiedValue" name="modifiedValue" placeholder="Specific for customer environment/domain"/>
 		</div>
 		<div class="form-row">
 			<input type="submit" value="Submit"/>
