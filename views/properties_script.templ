@@ -217,7 +217,6 @@ templ scripts() {
                         fetch('/property/' + id)
                             .then(response => response.json())
                             .then(data => {
-                                console.log("/fetch/" +id, data)
                                 showEditForm('update', data.Property.id, data.Property.key, data.Property.description, data.Property.default_value, data.Property.modified_value, data.TagIDs, activeElement);
                             })
                             .catch(error => console.error('Error fetching property:', error));

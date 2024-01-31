@@ -16,8 +16,14 @@ func InsertProperty(dbName string, c echo.Context) error {
 	defaultValue := c.FormValue("defaultValue")
 	modifiedValue := c.FormValue("modifiedValue")
 
+	form, err := c.FormParams()
+	if err != nil {
+		return errors.Wrapf(err, "can not get the map of all form parameters")
+	}
+	selectedTags := form["propertyTags"]
+
 	// Insert logic here
-	err := database.InsertProperty(dbName, key, description, defaultValue, modifiedValue)
+	err = database.InsertProperty(dbName, key, description, defaultValue, modifiedValue, selectedTags)
 	if err != nil {
 		return errors.Wrapf(err, "can not inset property %s", key)
 	}
@@ -40,10 +46,16 @@ func UpdateProperty(dbName string, c echo.Context) error {
 	defaultValue := c.FormValue("defaultValue")
 	modifiedValue := c.FormValue("modifiedValue")
 
-	// Update logic here
-	err = database.UpdateProperty(dbName, id, key, description, defaultValue, modifiedValue)
+	form, err := c.FormParams()
 	if err != nil {
-		return errors.Wrapf(err, "can not updat property %s", key)
+		return errors.Wrapf(err, "can not get the map of all form parameters")
+	}
+	propertyTags := form["propertyTags"]
+
+	// Update logic here
+	err = database.UpdateProperty(dbName, id, key, description, defaultValue, modifiedValue, propertyTags)
+	if err != nil {
+		return errors.Wrapf(err, "can not update property %s and tags", key)
 	}
 
 	err = CalculateProperties(dbName, c)

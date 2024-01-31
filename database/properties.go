@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/gizwiz/domain_config/models"
+	"github.com/pkg/errors"
+	"strconv"
 )
 
 // Fetch rows from the Property table depending on the specific filter setting arguments
@@ -58,7 +60,7 @@ func FetchProperties(dbName string, keyFilter string, modifiedOnly bool, selecte
 	return propertyValues, nil
 }
 
-func InsertProperty(dbName string, key, description, defaultValue, modifiedValue string) error {
+func InsertProperty(dbName string, key, description, defaultValue, modifiedValue string, tagIDs []string) error {
 	db, err := sql.Open("sqlite3", dbName)
 	if err != nil {
 		return err
@@ -73,10 +75,24 @@ func InsertProperty(dbName string, key, description, defaultValue, modifiedValue
 	defer stmt.Close()
 
 	_, err = stmt.Exec(key, description, defaultValue, modifiedValue)
-	return err
+	if err != nil {
+		return errors.Wrapf(err, "can not insert property %s", key)
+	}
+
+	p, err := GetPropertyByKey(db, key)
+	if err != nil {
+		return errors.Wrapf(err, "can not get property by key %s", key)
+	}
+
+	err = UpdatePropertyTags(db, p.ID, tagIDs)
+	if err != nil {
+		return errors.Wrapf(err, "can not update property_tags for property %s", key)
+	}
+
+	return nil
 }
 
-func UpdateProperty(dbName string, id int, key, description, defaultValue, modifiedValue string) error {
+func UpdateProperty(dbName string, id int, key, description, defaultValue, modifiedValue string, tagIDs []string) error {
 	db, err := sql.Open("sqlite3", dbName)
 	if err != nil {
 		return err
@@ -86,12 +102,51 @@ func UpdateProperty(dbName string, id int, key, description, defaultValue, modif
 	// Prepare update statement
 	stmt, err := db.Prepare("UPDATE properties SET key = ?, description = ?, default_value = ?, modified_value = ? WHERE id = ?")
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "can not prepare update property %d", id)
 	}
 	defer stmt.Close()
 
 	_, err = stmt.Exec(key, description, defaultValue, modifiedValue, id)
-	return err
+	if err != nil {
+		return errors.Wrapf(err, "can not update property %d", id)
+	}
+
+	err = UpdatePropertyTags(db, id, tagIDs)
+	if err != nil {
+		return errors.Wrapf(err, "can not update property_tags", id)
+	}
+
+	return nil
+}
+
+func UpdatePropertyTags(db *sql.DB, propertyID int, tagIDs []string) error {
+	stmt2, err := db.Prepare("DELETE FROM property_tags WHERE property_id = ?")
+	if err != nil {
+		return err
+	}
+	defer stmt2.Close()
+	_, err = stmt2.Exec(propertyID)
+	if err != nil {
+		return errors.Wrapf(err, "can not delete from property_tags for property: %d", propertyID)
+	}
+
+	for _, strTagID := range tagIDs {
+		stmt, err := db.Prepare("INSERT INTO property_tags (property_id, tag_id) VALUES (?, ?)")
+		if err != nil {
+			return err
+		}
+		defer stmt.Close()
+
+		tagID, err := strconv.Atoi(strTagID)
+		if err != nil {
+			return errors.Wrapf(err, "can not convert %s to int", strTagID)
+		}
+		_, err = stmt.Exec(propertyID, tagID)
+		if err != nil {
+			return errors.Wrapf(err, "can not insert into property_tags, property: %d, tag: %d", propertyID, tagID)
+		}
+	}
+	return nil
 }
 
 func UpdatePropertyCalculatedValue(db *sql.DB, id int, calculatedValue string) error {
