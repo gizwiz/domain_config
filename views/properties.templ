@@ -103,6 +103,37 @@ templ style() {
   form#propertyFilterForm .tags-select select {
     align-self: start;
   }
+
+  #editForm {
+      display: flex;
+      flex-direction: column;
+      max-width: 500px; /* Adjust as needed */
+      margin: 20px auto; /* Center the form */
+  }
+
+  #editForm .form-row {
+      margin-bottom: 15px;
+      display: flex;
+  }
+
+  #editForm .form-row label {
+      margin-right: 10px;
+      width: 150px; /* Adjust as needed */
+      text-align: right;
+  }
+
+  #editForm .form-row input[type="text"] {
+      flex-grow: 1; /* Allows input to take up remaining space */
+      padding: 5px;
+      border: 1px solid #ddd;
+  }
+
+  #editForm .form-row input[type="submit"] {
+      padding: 5px 15px;
+      border: 1px solid #ddd;
+      cursor: pointer;
+  }
+
   </style>
 }
 
@@ -374,14 +405,28 @@ templ propertyFilterForm(keyFilter string, isModifiedOnly bool, allTags []models
 }
 
 templ propertyEditForm() {
-	<form id="editForm" style="display: none;" method="post">
-		<input type="hidden" id="editMode" name="mode" value=""/>
-		<input type="hidden" id="editID" name="id" value=""/>
-		<input type="text" id="editKey" name="key" value=""/>
-		<input type="text" id="editDescription" name="description" placeholder="description"/>
-		<input type="text" id="editDefaultValue" name="defaultValue" placeholder="default value"/>
-		<input type="text" id="editModifiedValue" name="modifiedValue" placeholder="value specific for this domain"/>
-		<input type="submit" value="Submit"/>
+	<form id="editForm" method="post" style="display: none;">
+		<input type="hidden" id="editMode" name="mode" value="update"/>
+		<input type="hidden" id="editID" name="id" value="1"/>
+		<div class="form-row">
+			<label for="editKey">Key:</label>
+			<input type="text" id="editKey" name="key" value=""/>
+		</div>
+		<div class="form-row">
+			<label for="editDescription">Description:</label>
+			<input type="text" id="editDescription" name="description" placeholder="description"/>
+		</div>
+		<div class="form-row">
+			<label for="editDefaultValue">Default Value:</label>
+			<input type="text" id="editDefaultValue" name="defaultValue" placeholder="default value"/>
+		</div>
+		<div class="form-row">
+			<label for="editModifiedValue">Modified Value:</label>
+			<input type="text" id="editModifiedValue" name="modifiedValue" placeholder="value specific for this domain"/>
+		</div>
+		<div class="form-row">
+			<input type="submit" value="Submit"/>
+		</div>
 	</form>
 }
 
