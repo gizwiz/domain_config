@@ -9,13 +9,7 @@ import (
 )
 
 // Fetch rows from the Property table depending on the specific filter setting arguments
-func FetchProperties(dbName string, keyFilter string, modifiedOnly bool, selectedTags []string) ([]models.PropertyValue, error) {
-	db, err := sql.Open("sqlite3", dbName)
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-
+func FetchProperties(db *sql.DB, keyFilter string, modifiedOnly bool, selectedTags []string) ([]models.PropertyValue, error) {
 	query := "SELECT p.id, p.key, p.description, p.calculated_value value FROM properties p"
 
 	whereClause := []string{}
@@ -41,6 +35,8 @@ func FetchProperties(dbName string, keyFilter string, modifiedOnly bool, selecte
 		}
 	}
 
+	query += " order by p.key"
+
 	//log.Printf("query: %s", query)
 	rows, err := db.Query(query, keyFilter)
 	if err != nil {
@@ -60,14 +56,7 @@ func FetchProperties(dbName string, keyFilter string, modifiedOnly bool, selecte
 	return propertyValues, nil
 }
 
-func InsertProperty(dbName string, key, description, defaultValue, modifiedValue string, tagIDs []string) error {
-	db, err := sql.Open("sqlite3", dbName)
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-
-	// Prepare insert statement
+func InsertProperty(db *sql.DB, key, description, defaultValue, modifiedValue string, tagIDs []string) error {
 	stmt, err := db.Prepare("INSERT INTO properties (key, description, default_value, modified_value) VALUES (?, ?, ?, ?)")
 	if err != nil {
 		return err
@@ -92,14 +81,7 @@ func InsertProperty(dbName string, key, description, defaultValue, modifiedValue
 	return nil
 }
 
-func UpdateProperty(dbName string, id int, key, description, defaultValue, modifiedValue string, tagIDs []string) error {
-	db, err := sql.Open("sqlite3", dbName)
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-
-	// Prepare update statement
+func UpdateProperty(db *sql.DB, id int, key, description, defaultValue, modifiedValue string, tagIDs []string) error {
 	stmt, err := db.Prepare("UPDATE properties SET key = ?, description = ?, default_value = ?, modified_value = ? WHERE id = ?")
 	if err != nil {
 		return errors.Wrapf(err, "can not prepare update property %d", id)
@@ -161,16 +143,10 @@ func UpdatePropertyCalculatedValue(db *sql.DB, id int, calculatedValue string) e
 	return err
 }
 
-func GetPropertyByID(dbName string, id int) (models.Property, error) {
-	db, err := sql.Open("sqlite3", dbName)
-	if err != nil {
-		return models.Property{}, err
-	}
-	defer db.Close()
-
+func GetPropertyByID(db *sql.DB, id int) (models.Property, error) {
 	var prop models.Property
 	query := "SELECT id, key, description, default_value, modified_value, calculated_value FROM properties where id = ?"
-	err = db.QueryRow(query, id).Scan(&prop.ID, &prop.Key, &prop.Description, &prop.DefaultValue, &prop.ModifiedValue, &prop.CalculatedValue)
+	err := db.QueryRow(query, id).Scan(&prop.ID, &prop.Key, &prop.Description, &prop.DefaultValue, &prop.ModifiedValue, &prop.CalculatedValue)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return models.Property{}, nil

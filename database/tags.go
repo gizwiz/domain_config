@@ -6,13 +6,7 @@ import (
 )
 
 // Fetch all rows from the tags table
-func FetchTags(dbName string) ([]models.Tag, error) {
-	db, err := sql.Open("sqlite3", dbName)
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-
+func FetchTags(db *sql.DB) ([]models.Tag, error) {
 	query := "SELECT id, tag FROM tags"
 	rows, err := db.Query(query)
 	if err != nil {
@@ -33,13 +27,7 @@ func FetchTags(dbName string) ([]models.Tag, error) {
 }
 
 // Fetch all tags for a property
-func FetchPropertyTagIDs(dbName string, propertyID int) ([]int, error) {
-	db, err := sql.Open("sqlite3", dbName)
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-
+func FetchPropertyTagIDs(db *sql.DB, propertyID int) ([]int, error) {
 	query := "select t.tag_id from property_tags t where t.property_id = :1"
 	rows, err := db.Query(query, propertyID)
 	if err != nil {

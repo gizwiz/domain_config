@@ -8,19 +8,11 @@ import (
 	"github.com/gizwiz/domain_config/models"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
-	"log"
 )
 
-func CalculateProperties(dbName string, c echo.Context) error {
-
-	db, err := sql.Open("sqlite3", dbName)
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-
+func CalculateProperties(db *sql.DB, c echo.Context) error {
 	// all none formulas the calculated field is the same as the default_value
-	err = calculateNoneFunctionPropertiesDB(db)
+	err := calculateNoneFunctionPropertiesDB(db)
 	if err != nil {
 		return errors.Wrapf(err, "can not calculate none function properties")
 	}
@@ -136,7 +128,7 @@ func calculateFunctionPropertiesDB(db *sql.DB) error {
 }
 
 func calculateProperty(property *models.Property, env *Env) (string, error) {
-	log.Printf("calculate: %s started", property.Key)
+	//log.Printf("calculate: %s started", property.Key)
 	code := property.DefaultValue.String[1:]
 	program, err := expr.Compile(code, expr.Env(env))
 	if err != nil {
@@ -148,6 +140,6 @@ func calculateProperty(property *models.Property, env *Env) (string, error) {
 		return "", errors.Wrapf(err, "can not expr.compile %s", property.DefaultValue.String[1:])
 	}
 
-	log.Printf("calculate: %s -> %s done", property.Key, output)
+	//log.Printf("calculate: %s -> %s done", property.Key, output)
 	return fmt.Sprintf("%s", output), nil
 }

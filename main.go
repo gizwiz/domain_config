@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"github.com/a-h/templ"
 	"github.com/gizwiz/domain_config/database"
 	"github.com/gizwiz/domain_config/handlers"
@@ -41,11 +42,16 @@ func main() {
 }
 
 func mainWithErrors() error {
-	{
-		err := database.ApplyLatestDBMigrations(dbName)
-		if err != nil {
-			return errors.Wrapf(err, "can not apply latest DB migrations")
-		}
+
+	db, err := sql.Open("sqlite3", dbName)
+	if err != nil {
+		return errors.Wrapf(err, "Error opening database: %s", dbName)
+	}
+	defer db.Close()
+
+	err = database.ApplyLatestDBMigrations(db)
+	if err != nil {
+		return errors.Wrapf(err, "can not apply latest DB migrations")
 	}
 
 	// Create a new instance of Echo
@@ -67,12 +73,12 @@ func mainWithErrors() error {
 				return errors.Wrap(err, "can not convert modifiedOnly to bool")
 			}
 		}
-		allTags, err := database.FetchTags(dbName)
+		allTags, err := database.FetchTags(db)
 		if err != nil {
 			return errors.Wrapf(err, "can not fetch properties")
 		}
 		selectedTags := c.QueryParams()["selectedTags"]
-		props, err := database.FetchProperties(dbName, keyFilter, modifiedOnlyB, selectedTags)
+		props, err := database.FetchProperties(db, keyFilter, modifiedOnlyB, selectedTags)
 		if err != nil {
 			return errors.Wrapf(err, "can not fetch properties")
 		}
@@ -90,26 +96,26 @@ func mainWithErrors() error {
 	})
 
 	e.GET("/calculate", func(c echo.Context) error {
-		return handlers.CalculateProperties(dbName, c)
+		return handlers.CalculateProperties(db, c)
 	})
 
 	e.GET("/property/:id", func(c echo.Context) error {
-		return handlers.GetPropertyByID(dbName, c)
+		return handlers.GetPropertyByID(db, c)
 	})
 
 	e.POST("/insert", func(c echo.Context) error {
-		return handlers.InsertProperty(dbName, c)
+		return handlers.InsertProperty(db, c)
 	})
 
 	e.POST("/update", func(c echo.Context) error {
-		return handlers.UpdateProperty(dbName, c)
+		return handlers.UpdateProperty(db, c)
 	})
 
 	e.GET("/export", func(c echo.Context) error {
-		return handlers.ExportTablesToJson(dbName, c)
+		return handlers.ExportTablesToJson(db, c)
 	})
 	// Start the server
-	err := e.Start(":8080")
+	err = e.Start(":8080")
 	if err != nil {
 		return errors.Wrapf(err, "can not start echo server")
 		//e.Logger.Fatal(e.Start(":8080"))

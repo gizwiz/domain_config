@@ -8,16 +8,9 @@ import (
 	"os"
 )
 
-func ExportTablesToJson(dbName string, c echo.Context) error {
-
-	db, err := sql.Open("sqlite3", dbName)
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-
+func ExportTablesToJson(db *sql.DB, c echo.Context) error {
 	const exportDir = "./_export"
-	err = os.MkdirAll(exportDir, 0755)
+	err := os.MkdirAll(exportDir, 0755)
 	if err != nil {
 		return errors.Wrapf(err, "can not mkdir %s", exportDir)
 	}

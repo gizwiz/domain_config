@@ -17,7 +17,7 @@ import (
 //go:embed migration/*
 var migrationsFS embed.FS
 
-func ApplyLatestDBMigrations(dbName string) error {
+func ApplyLatestDBMigrations(db *sql.DB) error {
 	// Create a temporary directory to extract embedded migrations
 	tempDir := "temp_migrations"
 	if err := os.MkdirAll(tempDir, os.ModePerm); err != nil {
@@ -29,12 +29,6 @@ func ApplyLatestDBMigrations(dbName string) error {
 	if err := extractMigrations(tempDir); err != nil {
 		return errors.Wrapf(err, "cannot extractMigrations %s", tempDir)
 	}
-
-	db, err := sql.Open("sqlite3", dbName)
-	if err != nil {
-		return errors.Wrapf(err, "Error opening database: %s", dbName)
-	}
-	defer db.Close()
 
 	// Initialize the SQLite3 driver
 	driver, err := sqlite3.WithInstance(db, &sqlite3.Config{})
