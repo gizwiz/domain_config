@@ -67,13 +67,26 @@ func mainWithErrors() error {
 				return errors.Wrap(err, "can not convert modifiedOnly to bool")
 			}
 		}
-		props, err := handlers.FetchProperties(dbName, keyFilter, modifiedOnlyB)
+		allTags, err := database.FetchTags(dbName)
+		if err != nil {
+			return errors.Wrapf(err, "can not fetch properties")
+		}
+		selectedTags := c.QueryParams()["selectedTags"]
+		props, err := database.FetchProperties(dbName, keyFilter, modifiedOnlyB, selectedTags)
 		if err != nil {
 			return errors.Wrapf(err, "can not fetch properties")
 		}
 
 		// Use the properties templ to render the HTML table
-		return c.Render(http.StatusOK, "", views.PropertiesPage(props, keyFilter, modifiedOnlyB))
+		//return c.Render(http.StatusOK, "", views.PropertiesPage(props, keyFilter, modifiedOnlyB, allTags, selectedTags))
+		return c.Render(http.StatusOK, "", views.PropertiesPage(props, keyFilter, modifiedOnlyB, allTags, func(tagID string) bool {
+			for _, selectedTag := range selectedTags {
+				if selectedTag == tagID {
+					return true
+				}
+			}
+			return false
+		}))
 	})
 
 	e.GET("/calculate", func(c echo.Context) error {

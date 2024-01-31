@@ -3,17 +3,19 @@ package views
 import (
 	"strconv"
 
-  "github.com/gizwiz/domain_config/models"
+	"github.com/gizwiz/domain_config/models"
 )
 
-templ PropertiesPage(data []models.PropertyValue, keyFilter string, modifiedOnly bool) {
+templ PropertiesPage(propertyValues []models.PropertyValue, keyFilter string, modifiedOnly bool, allTags []models.Tag,  isSelectedTag models.StringPredicate) {
 	<html>
 		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			@style()
 			@scripts()
 		</head>
 		<body>
-			@properties(data, keyFilter, modifiedOnly)
+			@properties(propertyValues, keyFilter, modifiedOnly, allTags, isSelectedTag)
 		</body>
 	</html>
 }
@@ -21,7 +23,7 @@ templ PropertiesPage(data []models.PropertyValue, keyFilter string, modifiedOnly
 templ style() {
 	<style type="text/css">
     table {
-              font-family: monospace;
+        font-family: monospace;
         width: 100%;
         border-collapse: collapse;
     }
@@ -40,7 +42,6 @@ templ style() {
         padding: 8px;
     }
 
-    /* Style for the first column (key column) */
     td:first-child {
         background-color: #f9f9f9; /* Soft background color for the key column */
     }
@@ -48,6 +49,40 @@ templ style() {
     #properties tbody tr:focus td:first-child {
         background-color: #e7f4ff; /* Light blue background for visual focus indication */
     }
+
+  form#propertyFilterForm {
+    display: flex;
+    flex-direction: column;
+    max-width: 300px;
+    margin: 20px;
+  }
+  form#propertyFilterForm > div {
+    margin-bottom: 10px;
+  }
+  form#propertyFilterForm label {
+    margin-bottom: 5px;
+    display: block;
+  }
+  form#propertyFilterForm .form-group {
+    margin-bottom: 15px;
+  }
+  form#propertyFilterForm .checkbox-group {
+    display: flex;
+    align-items: center;
+  }  
+  form#propertyFilterForm .checkbox-group input[type="checkbox"] {
+    margin-right: 10px; /* Adjust spacing between checkbox and label */
+  }
+  form#propertyFilterForm .tags-select {
+    display: flex;
+    flex-direction: column;
+  }
+  form#propertyFilterForm .tags-select label {
+    align-self: start;
+  }
+  form#propertyFilterForm .tags-select select {
+    align-self: start;
+  }
   </style>
 }
 
@@ -230,6 +265,10 @@ templ scripts() {
             document.getElementById('propertyFilterForm').submit();
         });
 
+        document.getElementById('selectedTags').addEventListener('change', function() {
+            document.getElementById('propertyFilterForm').submit();
+        });
+
         // Event listener to submit the form when Enter is pressed in the input
         input.addEventListener('keyup', function(event) {
             if (event.key === 'Enter') {
@@ -242,11 +281,11 @@ templ scripts() {
  </script>
 }
 
-templ properties(data []models.PropertyValue, keyFilter string, modifiedOnly bool) {
-    // help screen
-    @helpScreen()
+templ properties(data []models.PropertyValue, keyFilter string, modifiedOnly bool, allTags []models.Tag, isSelectedTag models.StringPredicate) {
+	// help screen
+	@helpScreen()
 	// filter the property list
-	@propertyFilterForm(keyFilter, modifiedOnly)
+	@propertyFilterForm(keyFilter, modifiedOnly, allTags, isSelectedTag)
 	// edit form for a single property
 	@propertyEditForm()
 	// property list
@@ -278,17 +317,37 @@ templ properties(data []models.PropertyValue, keyFilter string, modifiedOnly boo
 	</table>
 }
 
-templ propertyFilterForm(keyFilter string, isModifiedOnly bool) {
+templ propertyFilterForm(keyFilter string, isModifiedOnly bool, allTags []models.Tag, isSelectedTag models.StringPredicate) {
 	<form id="propertyFilterForm" action="/properties" method="get">
-        <label for="keyFilter">Key Filter</label>
-		<input type="text" id="filterInput" name="keyFilter" value={ keyFilter } />
-		<input type="checkbox" id="modifiedOnlyCheckbox" value="{isModifiedOnly}"
-            if isModifiedOnly{
-              checked
-            }
-		/>
-		<input type="hidden" id="modifiedOnly" name="modifiedOnly" value="false" />
-        <label for="modifiedOnlyCheckbox">Modified Only</label>
+		<div class="form-group">
+			<label for="keyFilter">Key Filter</label>
+			<input type="text" id="filterInput" name="keyFilter" value={ keyFilter }/>
+		</div>
+		<div class="form-group checkbox-group">
+			<input type="hidden" id="modifiedOnly" name="modifiedOnly" value="false"/>
+			<input
+				type="checkbox"
+				id="modifiedOnlyCheckbox"
+				value="{isModifiedOnly}"
+				if isModifiedOnly {
+					checked
+				}
+			/>
+			<label for="modifiedOnlyCheckbox">Modified Only</label>
+		</div>
+		<div class="form-group tags-select">
+			<label for="selectedTags">Tags</label>
+			<select id="selectedTags" name="selectedTags" multiple>
+				for _, tag := range allTags {
+					<option
+						value={ strconv.Itoa(tag.ID) }
+						if isSelectedTag( strconv.Itoa(tag.ID)) {
+							selected
+						}
+					>{ tag.Tag }</option>
+				}
+			</select>
+		</div>
 	</form>
 }
 

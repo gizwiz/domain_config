@@ -1,58 +1,14 @@
 package handlers
 
 import (
-	"database/sql"
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/gizwiz/domain_config/database"
-	"github.com/gizwiz/domain_config/models"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 )
-
-// Fetch all rows from the Property table
-func FetchProperties(dbName string, keyFilter string, modifiedOnly bool) ([]models.PropertyValue, error) {
-	db, err := sql.Open("sqlite3", dbName)
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-
-	whereClause := []string{}
-	query := "SELECT id, key, description, calculated_value value FROM properties"
-	if keyFilter != "" {
-		whereClause = append(whereClause, "key like ?")
-	}
-	if modifiedOnly {
-		whereClause = append(whereClause, "modified_value != ''")
-	}
-	for index, filter := range whereClause {
-		if index == 0 {
-			query += " WHERE " + filter
-		} else {
-			query += " AND " + filter
-		}
-	}
-	log.Printf("query: %s, filter: %s, modifiedOnly: %v\n", query, keyFilter, modifiedOnly)
-	rows, err := db.Query(query, keyFilter)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var propertyValues []models.PropertyValue
-	for rows.Next() {
-		var pv models.PropertyValue
-		if err := rows.Scan(&pv.ID, &pv.Key, &pv.Description, &pv.Value); err != nil {
-			return nil, err
-		}
-		propertyValues = append(propertyValues, pv)
-	}
-
-	return propertyValues, nil
-}
 
 func InsertProperty(dbName string, c echo.Context) error {
 	key := c.FormValue("key")

@@ -2,9 +2,62 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
+	"log"
+	"strings"
 
 	"github.com/gizwiz/domain_config/models"
 )
+
+// Fetch rows from the Property table depending on the specific filter setting arguments
+func FetchProperties(dbName string, keyFilter string, modifiedOnly bool, selectedTags []string) ([]models.PropertyValue, error) {
+	db, err := sql.Open("sqlite3", dbName)
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	query := "SELECT p.id, p.key, p.description, p.calculated_value value FROM properties p"
+
+	whereClause := []string{}
+	if keyFilter != "" {
+		whereClause = append(whereClause, "p.key like ?")
+	}
+	if modifiedOnly {
+		whereClause = append(whereClause, "p.modified_value != ''")
+	}
+	if len(selectedTags) > 0 {
+		query += " join property_tags pt on p.id = pt.property_id join tags t on pt.tag_id = t.id"
+		selectedTagList := strings.Join(selectedTags, ",")
+		whereClause = append(whereClause, fmt.Sprintf("t.ID in (%s)", selectedTagList))
+	}
+
+	for index, filter := range whereClause {
+		if index == 0 {
+			query += " WHERE " + filter
+		} else {
+			query += " AND " + filter
+		}
+	}
+
+	log.Printf("query: %s", query)
+	rows, err := db.Query(query, keyFilter)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var propertyValues []models.PropertyValue
+	for rows.Next() {
+		var pv models.PropertyValue
+		if err := rows.Scan(&pv.ID, &pv.Key, &pv.Description, &pv.Value); err != nil {
+			return nil, err
+		}
+		propertyValues = append(propertyValues, pv)
+	}
+
+	return propertyValues, nil
+}
 
 func InsertProperty(dbName string, key, description, defaultValue, modifiedValue string) error {
 	db, err := sql.Open("sqlite3", dbName)

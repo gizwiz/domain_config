@@ -1,5 +1,5 @@
 This is just a play project to keep track of some "properties" in a sqllite db.
-The idea is to work towards a more generic appraoch to keep track of configuration properties where properties can store values, but can also depend on other properties to calculate default values.
+The idea is to work towards a more generic approach to keep track of configuration properties where properties can store values, but can also depend on other properties to calculate default values.
 
 ## Prepare the database using migrations:
 

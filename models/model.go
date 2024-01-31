@@ -55,3 +55,11 @@ func (p Property) MarshalJSON() ([]byte, error) {
 
 	return json.Marshal(j)
 }
+
+type Tag struct {
+	ID  int    `json:"id"`
+	Tag string `json:"tag"`
+}
+
+// function definition for isSelectedTag
+type StringPredicate func(string) bool
