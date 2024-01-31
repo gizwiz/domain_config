@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"log"
+	"github.com/gizwiz/domain_config/models"
 	"net/http"
 	"strconv"
 
@@ -59,11 +59,16 @@ func GetPropertyByID(dbName string, c echo.Context) error {
 		return errors.Wrapf(err, "cannot convert %s into int", c.Param("id"))
 	}
 
-	property, err := database.GetPropertyByID(dbName, id)
+	var propertyWithTagIDs models.PropertyWithTagIDs
+	propertyWithTagIDs.Property, err = database.GetPropertyByID(dbName, id)
 	if err != nil {
-		log.Println("Error fetching property by ID:", err)
-		return err
+		return errors.Wrapf(err, "can not fetch property by id %d", id)
 	}
 
-	return c.JSON(http.StatusOK, property)
+	propertyWithTagIDs.TagIDs, err = database.FetchPropertyTagIDs(dbName, id)
+	if err != nil {
+		return errors.Wrapf(err, "can not fetch tags for propertyID %d", id)
+	}
+
+	return c.JSON(http.StatusOK, propertyWithTagIDs)
 }

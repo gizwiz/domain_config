@@ -61,5 +61,10 @@ type Tag struct {
 	Tag string `json:"tag"`
 }
 
+type PropertyWithTagIDs struct {
+	Property Property
+	TagIDs   []int
+}
+
 // function definition for isSelectedTag
 type StringPredicate func(string) bool

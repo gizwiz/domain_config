@@ -106,10 +106,10 @@ func UpdatePropertyCalculatedValue(db *sql.DB, id int, calculatedValue string) e
 	return err
 }
 
-func GetPropertyByID(dbName string, id int) (*models.Property, error) {
+func GetPropertyByID(dbName string, id int) (models.Property, error) {
 	db, err := sql.Open("sqlite3", dbName)
 	if err != nil {
-		return nil, err
+		return models.Property{}, err
 	}
 	defer db.Close()
 
@@ -118,12 +118,12 @@ func GetPropertyByID(dbName string, id int) (*models.Property, error) {
 	err = db.QueryRow(query, id).Scan(&prop.ID, &prop.Key, &prop.Description, &prop.DefaultValue, &prop.ModifiedValue, &prop.CalculatedValue)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil
+			return models.Property{}, nil
 		}
-		return nil, err
+		return models.Property{}, err
 	}
 
-	return &prop, nil
+	return prop, nil
 }
 
 func GetPropertyByKey(db *sql.DB, key string) (*models.Property, error) {

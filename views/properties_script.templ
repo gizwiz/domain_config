@@ -28,6 +28,28 @@ templ scripts() {
         // when a page is loaded, restore the focus if an ID is stored
         refocus()
 
+        function setSelectedTags(propertyTags) {
+            var select = document.getElementById('editPropertyTags');
+
+            // If propertyTags is null or undefined, treat it as an empty array
+            if (!propertyTags) {
+                propertyTags = [];
+            }
+
+            // Loop through each option in the select element
+            for (var i = 0; i < select.options.length; i++) {
+                var option = select.options[i];
+                // Check if the current option's value is in the propertyTags array
+                if (propertyTags.includes(parseInt(option.value))) {
+                    // If it is, mark it as selected
+                    option.selected = true;
+                } else {
+                    // Otherwise, ensure it is not selected
+                    option.selected = false;
+                }
+            }
+        }
+
         // edit form for a property
         var editForm = document.getElementById('editForm');
         var editModeInput = document.getElementById('editMode');
@@ -36,9 +58,10 @@ templ scripts() {
         var editDescriptionInput = document.getElementById('editDescription')
         var editDefaultValueInput = document.getElementById('editDefaultValue')
         var editModifiedValueInput = document.getElementById('editModifiedValue')
+        var editPropertyTagsInput = document.getElementById('editPropertyTags')
 
 
-        function showEditForm(mode, id = -1, key = '', description = '', defaultValue = '', modifiedValue = '', activeRow) {
+        function showEditForm(mode, id = -1, key = '', description = '', defaultValue = '', modifiedValue = '', propertyTags=[], activeRow) {
             var formAction = mode === 'insert' ? '/insert' : '/update';
             editForm.setAttribute('action', formAction);
 
@@ -48,6 +71,7 @@ templ scripts() {
             editDescriptionInput.value = description;
             editDefaultValueInput.value = defaultValue;
             editModifiedValueInput.value = modifiedValue;
+            editPropertyTagsInput.value = propertyTags;
 
             // Move the form to the active row's position in "edit" mode, not for a new property
             if (mode !== 'insert') {
@@ -66,6 +90,9 @@ templ scripts() {
 
                 // add the active class to the row
                 activeRow.classList.add('active-row')
+
+               // update selected tags for this property
+               setSelectedTags(propertyTags);
             }
 
             editForm.style.display = 'block';
@@ -190,7 +217,8 @@ templ scripts() {
                         fetch('/property/' + id)
                             .then(response => response.json())
                             .then(data => {
-                                showEditForm('update', data.id, data.key, data.description, data.default_value, data.modified_value, activeElement);
+                                console.log("/fetch/" +id, data)
+                                showEditForm('update', data.Property.id, data.Property.key, data.Property.description, data.Property.default_value, data.Property.modified_value, data.TagIDs, activeElement);
                             })
                             .catch(error => console.error('Error fetching property:', error));
                         handled = true;
