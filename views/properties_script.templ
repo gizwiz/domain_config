@@ -50,6 +50,23 @@ templ scripts() {
             }
         }
 
+        function disableOtherRows(exceptRow) {
+            var rows = document.querySelectorAll('#properties tr');
+            rows.forEach(function(row) {
+                if (row !== exceptRow) {
+                    row.classList.add('disable-pointer-events');
+                }
+            });
+        }
+
+        function enableAllRows() {
+            var rows = document.querySelectorAll('#properties tr');
+            rows.forEach(function(row) {
+                row.classList.remove('disable-pointer-events');
+            });
+        }
+
+
         // edit form for a property
         var editForm = document.getElementById('editForm');
         var editModeInput = document.getElementById('editMode');
@@ -62,6 +79,8 @@ templ scripts() {
 
 
         function showEditForm(mode, id = -1, key = '', description = '', defaultValue = '', modifiedValue = '', propertyTags=[], activeRow) {
+            disableOtherRows(activeRow)
+
             var formAction = mode === 'insert' ? '/insert' : '/update';
             editForm.setAttribute('action', formAction);
 
@@ -100,6 +119,8 @@ templ scripts() {
         }
 
         function hideEditForm() {
+            enableAllRows()
+
             document.getElementById('editForm').style.display = 'none';
             var editFormParent = editForm.parentNode;
 
