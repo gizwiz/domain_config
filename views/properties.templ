@@ -28,7 +28,7 @@ templ properties(data []models.PropertyValue, keyFilter string, modifiedOnly boo
 	</div>
 	<div id="new_property" style="display:none;">
 		<h2>Add new property</h2>
-		@propertyEditForm(allTags, isSelectedTag)  // todo replace isSelectedTag because this depends on the data here!
+		@propertyEditForm(allTags)
 	</div>
 	<div>
 		<h2>Properties</h2>
@@ -72,7 +72,7 @@ templ propertyFilterForm(keyFilter string, isModifiedOnly bool, allTags []models
 	</form>
 }
 
-templ propertyEditForm(allTags []models.Tag, isSelectedTag models.StringPredicate) {
+templ propertyEditForm(allTags []models.Tag) {
 	<form id="editForm" method="post" style="display: none;">
 		<input type="hidden" id="editMode" name="mode" value="update"/>
 		<input type="hidden" id="editID" name="id" value="1"/>
@@ -92,12 +92,7 @@ templ propertyEditForm(allTags []models.Tag, isSelectedTag models.StringPredicat
 			<label for="editPropertyTags">Property Tags</label>
 			<select id="editPropertyTags" name="propertyTags" multiple>
 				for _, tag := range allTags {
-					<option
-						value={ strconv.Itoa(tag.ID) }
-						if isSelectedTag( strconv.Itoa(tag.ID)) {
-							selected
-						}
-					>{ tag.Tag }</option>
+					<option value={ strconv.Itoa(tag.ID) }>{ tag.Tag }</option>
 				}
 			</select>
 		</div>
@@ -105,7 +100,8 @@ templ propertyEditForm(allTags []models.Tag, isSelectedTag models.StringPredicat
 			<label for="editModifiedValue">Modified Value:</label>
 			<input type="text" id="editModifiedValue" name="modifiedValue" placeholder="Specific for customer environment/domain"/>
 		</div>
-		<div class="form-row" style="display:none;">  //todo keep invisible?
+		<div class="form-row" style="display:none;">
+			//todo keep invisible?
 			<input type="submit" value="Submit"/>
 		</div>
 	</form>
