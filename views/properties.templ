@@ -76,6 +76,7 @@ templ propertyEditForm(allTags []models.Tag) {
 	<form id="editForm" method="post" style="display: none;">
 		<input type="hidden" id="editMode" name="mode" value="update"/>
 		<input type="hidden" id="editID" name="id" value="1"/>
+		<input type="hidden" id="editCurrentURL" name="currentURL" value=""/>
 		<div class="form-row">
 			<label for="editKey">Key:</label>
 			<input type="text" id="editKey" name="key" value="" placeholder="The key should be unique, so prefix with the component name!"/>

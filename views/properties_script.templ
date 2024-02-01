@@ -76,6 +76,7 @@ templ scripts() {
         var editDefaultValueInput = document.getElementById('editDefaultValue')
         var editModifiedValueInput = document.getElementById('editModifiedValue')
         var editPropertyTagsInput = document.getElementById('editPropertyTags')
+        var editCurrentURLInput = document.getElementById('editCurrentURL')
 
 
         function showEditForm(mode, id = -1, key = '', description = '', defaultValue = '', modifiedValue = '', propertyTags=[], activeRow) {
@@ -91,6 +92,7 @@ templ scripts() {
             editDefaultValueInput.value = defaultValue;
             editModifiedValueInput.value = modifiedValue;
             editPropertyTagsInput.value = propertyTags;
+            editCurrentURLInput.value = window.location.href;
 
             // Move the form to the active row's position in "edit" mode, not for a new property
             if (mode !== 'insert') {

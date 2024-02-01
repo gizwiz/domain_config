@@ -16,6 +16,7 @@ func InsertProperty(db *sql.DB, c echo.Context) error {
 	description := c.FormValue("description")
 	defaultValue := c.FormValue("defaultValue")
 	modifiedValue := c.FormValue("modifiedValue")
+	currentURL := c.FormValue("currentURL")
 
 	form, err := c.FormParams()
 	if err != nil {
@@ -34,7 +35,7 @@ func InsertProperty(db *sql.DB, c echo.Context) error {
 		return errors.Wrapf(err, "can not calculate properties after inset property %s", key)
 	}
 
-	return c.Redirect(http.StatusFound, "/properties")
+	return c.Redirect(http.StatusFound, currentURL)
 }
 
 func UpdateProperty(db *sql.DB, c echo.Context) error {
@@ -46,6 +47,7 @@ func UpdateProperty(db *sql.DB, c echo.Context) error {
 	description := c.FormValue("description")
 	defaultValue := c.FormValue("defaultValue")
 	modifiedValue := c.FormValue("modifiedValue")
+	currentURL := c.FormValue("currentURL")
 
 	form, err := c.FormParams()
 	if err != nil {
@@ -63,7 +65,7 @@ func UpdateProperty(db *sql.DB, c echo.Context) error {
 	if err != nil {
 		return errors.Wrapf(err, "can not calculate properties after inset property %s", key)
 	}
-	return c.Redirect(http.StatusFound, "/properties")
+	return c.Redirect(http.StatusFound, currentURL)
 }
 
 func GetPropertyByID(db *sql.DB, c echo.Context) error {
