@@ -29,6 +29,23 @@ templ style() {
         background-color: #e7f4ff; /* Light blue background for visual focus indication */
     }
 
+    #properties tbody {
+        display: block;
+        max-height: calc(100vh - 300px) ; /* Adjust 300px to the total height of other elements */
+        overflow-y: scroll;
+    }
+
+    #properties thead,
+    #properties tbody tr {
+        display: table;
+        width: 100%; /* Adjust as necessary */
+        table-layout: fixed; /* Optional, for equal column width */
+    }
+
+    #properties {
+        width: 100%; /* Adjust as necessary */
+    }
+
     .active-row {
         background-color: #e7f4ff;
     }
