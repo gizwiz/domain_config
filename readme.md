@@ -21,3 +21,9 @@ Assuming here that sqlite3 is already installed. On mac this can be done using `
 ## Browser:
 
     open http://localhost:8080/properties
+
+## continuous dev
+
+    tmux pane1: npm run watch
+    tmux pane2: air
+    tmux pane3: nvim .

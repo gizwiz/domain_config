@@ -6,3 +6,5 @@ mailmap.txt
 _play
 _export
 .idea
+tmp
+node_modules

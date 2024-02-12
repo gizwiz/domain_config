@@ -1,10 +1,12 @@
 package views
 
 templ style() {
+  <link href="/static/css/tailwind.css" rel="stylesheet"/>
 	<style type="text/css">
-	body {
-	    font-family: monospace;
-	}
+    @tailwind base;
+    @tailwind components;
+    @tailwind utilities;
+  
     table {
         font-family: monospace;
         width: 100%;
@@ -23,6 +25,10 @@ templ style() {
 
     td {
         padding: 8px;
+    }
+
+    select {
+        padding-right: 20px;
     }
 
     #properties tbody tr:focus {
@@ -48,14 +54,6 @@ templ style() {
 
     .active-row {
         background-color: #e7f4ff;
-    }
-
-    h2 {
-        background-color: #005A7C;
-        color: white;
-        font-size: 1.1em;
-        border: 1px solid #ddd;
-        padding: 8px;
     }
 
   form#propertyFilterForm {

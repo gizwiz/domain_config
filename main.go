@@ -3,6 +3,12 @@ package main
 import (
 	"context"
 	"database/sql"
+	"embed"
+	"io"
+	"log"
+	"net/http"
+	"strconv"
+
 	"github.com/a-h/templ"
 	"github.com/gizwiz/domain_config/database"
 	"github.com/gizwiz/domain_config/handlers"
@@ -10,10 +16,6 @@ import (
 	"github.com/labstack/echo/v4"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pkg/errors"
-	"io"
-	"log"
-	"net/http"
-	"strconv"
 )
 
 const dbName = "main.db"
@@ -41,6 +43,9 @@ func main() {
 	}
 }
 
+//go:embed static/css/tailwind.css
+var tailwindCSS embed.FS
+
 func mainWithErrors() error {
 
 	db, err := sql.Open("sqlite3", dbName)
@@ -60,6 +65,15 @@ func mainWithErrors() error {
 	e.Debug = true
 
 	e.Renderer = &TemplRender{}
+
+	e.GET("/static/css/tailwind.css", func(c echo.Context) error {
+		file, err := tailwindCSS.Open("static/css/tailwind.css")
+		if err != nil {
+			return err // Properly handle the error
+		}
+		defer file.Close()
+		return c.Stream(http.StatusOK, "text/css", file)
+	})
 
 	// display the key-value table
 	e.GET("/properties", func(c echo.Context) error {
