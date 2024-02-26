@@ -8,3 +8,4 @@ _export
 .idea
 tmp
 node_modules
+bin

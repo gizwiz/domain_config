@@ -7,54 +7,28 @@ templ style() {
     @tailwind components;
     @tailwind utilities;
   
-    table {
-        font-family: monospace;
-        width: 100%;
-        border-collapse: collapse;
-    }
 
-    table, th, td {
-        border: 1px solid #ddd;
-    }
 
-    th {
-        background-color: #f2f2f2; /* Soft background color for headers */
-        text-align: left;
-        padding: 8px;
-    }
 
-    td {
-        padding: 8px;
-    }
-
-    select {
-        padding-right: 20px;
-    }
-
-    #properties tbody tr:focus {
+    #properties tbody tr:focus, .active-row {
         background-color: #e7f4ff; /* Light blue background for visual focus indication */
+        outline: none !important;
     }
 
-    #properties tbody {
-        display: block;
-        max-height: calc(100vh - 300px) ; /* Adjust 300px to the total height of other elements */
-        overflow-y: scroll;
-    }
+/* custom styles */
+#properties thead th {
+  position: sticky;
+  top: 0;
+  background: white; /* or any color that matches your design */
+}
 
-    #properties thead,
-    #properties tbody tr {
-        display: table;
-        width: 100%; /* Adjust as necessary */
-        table-layout: fixed; /* Optional, for equal column width */
-    }
+#properties tbody {
+  display: table-row-group; /* This is the default display for tbody */
+  max-height: calc(100vh - 300px);
+  overflow-y: auto;
+}
 
-    #properties {
-        width: 100%; /* Adjust as necessary */
-    }
 
-    .active-row {
-        background-color: #e7f4ff;
-    }
 
   form#propertyFilterForm {
     display: flex;
