@@ -38,81 +38,81 @@ templ properties(data []models.PropertyValue, keyFilter string, modifiedOnly boo
 }
 
 templ propertyFilterForm(keyFilter string, isModifiedOnly bool, allTags []models.Tag, isSelectedTag models.StringPredicate) {
-	<form id="propertyFilterForm" action="/properties" method="get">
-		<div class="form-group-container">
-			<div class="form-group">
-				<label for="keyFilter">Key Filter</label>
-				<input class="border" type="text" id="filterInput" name="keyFilter" value={ keyFilter }/>
-			</div>
-			<div class="form-group checkbox-group">
-				<input type="hidden" id="modifiedOnly" name="modifiedOnly" value="false"/>
-				<input
-					type="checkbox"
-					id="modifiedOnlyCheckbox"
-					value="{isModifiedOnly}"
-					if isModifiedOnly {
-						checked
-					}
-				/>
-				<label for="modifiedOnlyCheckbox">Modified Only</label>
-			</div>
-		</div>
-		<div class="form-group tags-select">
-			<label for="selectedTags">Tags</label>
-			<select id="selectedTags" name="selectedTags" class="border" multiple>
-				for _, tag := range allTags {
-					<option
-						value={ strconv.Itoa(tag.ID) }
-						if isSelectedTag( strconv.Itoa(tag.ID)) {
-							selected
-						}
-					>{ tag.Tag }</option>
-				}
-			</select>
-		</div>
-	</form>
+  <form id="propertyFilterForm" action="/properties" method="get" class="flex flex-col sm:flex-row max-w-xs sm:max-w-md mx-5 my-5 sm:items-start">
+      <div class="form-group-container flex flex-col mr-5 mb-2.5 sm:mb-0">
+          <div class="form-group mb-2.5">
+              <label for="keyFilter" class="block mb-1.25">Key Filter</label>
+              <input type="text" id="filterInput" name="keyFilter" value={ keyFilter } class="border"/>
+          </div>
+          <div class="form-group checkbox-group flex items-center mb-2.5">
+              <input type="hidden" id="modifiedOnly" name="modifiedOnly" value="false"/>
+              <input type="checkbox" id="modifiedOnlyCheckbox" value="{isModifiedOnly}"
+                class="mr-2.5"
+                if isModifiedOnly {
+                  checked
+                }
+              />
+              <label for="modifiedOnlyCheckbox">Modified Only</label>
+          </div>
+      </div>
+      <div class="form-group tags-select flex flex-col mb-2.5">
+          <label for="selectedTags" class="self-start mb-1.25">Tags</label>
+          <select id="selectedTags" name="selectedTags" class="border self-start w-24" multiple>
+            for _, tag := range allTags {
+              <option
+                value={ strconv.Itoa(tag.ID) }
+                if isSelectedTag( strconv.Itoa(tag.ID)) {
+                  selected
+                }
+              >{ tag.Tag }</option>
+            }
+          </select>
+      </div>
+  </form>
 }
 
 templ propertyEditForm(allTags []models.Tag) {
-	<form id="editForm" method="post" style="display: none;">
-		<input type="hidden" id="editMode" name="mode" value="update"/>
-		<input type="hidden" id="editID" name="id" value="1"/>
-		<input type="hidden" id="editCurrentURL" name="currentURL" value=""/>
-		<div class="form-row">
-			<label for="editKey">Key:</label>
-			<input type="text" id="editKey" name="key" value="" placeholder="The key should be unique, so prefix with the component name!"/>
-		</div>
-		<div class="form-row">
-			<label for="editDescription">Description:</label>
-			<input type="text" id="editDescription" name="description" placeholder="Put a clear description here"/>
-		</div>
-		<div class="form-row">
-			<label for="editDefaultValue">Default Value:</label>
-			<input type="text" id="editDefaultValue" name="defaultValue" placeholder="put a constant, or start with = for a formula"/>
-		</div>
-		<div class="form-row tags-select">
-			<label for="editPropertyTags">Property Tags</label>
-			<select id="editPropertyTags" name="propertyTags" class="border" multiple>
-				for _, tag := range allTags {
-					<option value={ strconv.Itoa(tag.ID) }>{ tag.Tag }</option>
-				}
-			</select>
-		</div>
-		<div class="form-row">
-			<label for="editModifiedValue">Modified Value:</label>
-			<input type="text" id="editModifiedValue" name="modifiedValue" placeholder="Specific for customer environment/domain"/>
-		</div>
-		<div class="form-row" style="display:none;">
-			//todo keep invisible?
-			<input type="submit" value="Submit"/>
-		</div>
-	</form>
+<form id="editForm" method="post" class="max-w-2xl mx-auto space-y-3">
+    <input type="hidden" id="editMode" name="mode" value="update"/>
+    <input type="hidden" id="editID" name="id" value="1"/>
+    <input type="hidden" id="editCurrentURL" name="currentURL" value=""/>
+    <div class="form-row flex">
+        <label for="editKey" class="block w-1/4 text-right mr-3">Key:</label>
+        <input type="text" id="editKey" name="key" value="" placeholder="The key should be unique, so prefix with the component name!" class="flex-grow p-1 border border-gray-300"/>
+    </div>
+    <div class="form-row flex">
+        <label for="editDescription" class="block w-1/4 text-right mr-3">Description:</label>
+        <input type="text" id="editDescription" name="description" placeholder="Put a clear description here" class="flex-grow p-1 border border-gray-300"/>
+    </div>
+    <div class="form-row flex">
+        <label for="editDefaultValue" class="block w-1/4 text-right mr-3">Default Value:</label>
+        <input type="text" id="editDefaultValue" name="defaultValue" placeholder="put a constant, or start with = for a formula" class="flex-grow p-1 border border-gray-300"/>
+    </div>
+    <div class="form-row flex tags-select">
+        <label for="editPropertyTags" class="block w-1/4 text-right mr-3">Property Tags</label>
+        <select id="editPropertyTags" name="propertyTags" class="border p-1" multiple>
+            for _, tag := range allTags {
+              <option
+                value={ strconv.Itoa(tag.ID) }
+              >{ tag.Tag }</option>
+            }
+        </select>
+    </div>
+    <div class="form-row flex">
+        <label for="editModifiedValue" class="block w-1/4 text-right mr-3">Modified Value:</label>
+        <input type="text" id="editModifiedValue" name="modifiedValue" placeholder="Specific for customer environment/domain" class="flex-grow p-1 border border-gray-300"/>
+    </div>
+    <div class="form-row flex hidden">
+        <input type="submit" value="Submit" class="block w-1/4 text-right mr-3"/>
+    </div>
+</form>
 }
 
 templ propertyList(data []models.PropertyValue) {
-	<table class="table-auto divide-y divide-gray-300 w-full mx-5" id="properties">
+  <div class="m-5">
+	<table class="table-auto divide-y divide-gray-300 w-full" id="properties">
 		<thead>
-			<tr class="bg-gray-200 text-left">
+			<tr class="bg-white text-left">
 				<th class="px-6 py-2">Key</th>
 				<th class="px-6 py-2">Description</th>
 				<th class="px-6 py-2">Value</th>
@@ -136,6 +136,7 @@ templ propertyList(data []models.PropertyValue) {
 			}
 		</tbody>
 	</table>
+  </div>
 }
 
 templ helpScreen() {
