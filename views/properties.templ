@@ -15,14 +15,36 @@ templ PropertiesPage(propertyValues []models.PropertyValue, keyFilter string, mo
 			@scripts()
 		</head>
 		<body>
+			<h1 class="text-sky-900 text-2xl p-3">Settings</h1>
+			@tabs()
 			@properties(propertyValues, keyFilter, modifiedOnly, allTags, isSelectedTag)
 		</body>
 	</html>
 }
 
+templ tabs() {
+	<div class="border-b border-gray-200 dark:border-gray-700">
+		<ul class="flex flex-wrap -mb-px text-base font-medium text-center text-gray-500 dark:text-gray-400">
+			<li class="me-2">
+				<a href="#" class="inline-flex items-center justify-center p-4 border-b-2 rounded-t-lg group border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300">
+					<svg class="w-4 h-4 me-2 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+						<path d="M5 11.424V1a1 1 0 1 0-2 0v10.424a3.228 3.228 0 0 0 0 6.152V19a1 1 0 1 0 2 0v-1.424a3.228 3.228 0 0 0 0-6.152ZM19.25 14.5A3.243 3.243 0 0 0 17 11.424V1a1 1 0 0 0-2 0v10.424a3.227 3.227 0 0 0 0 6.152V19a1 1 0 1 0 2 0v-1.424a3.243 3.243 0 0 0 2.25-3.076Zm-6-9A3.243 3.243 0 0 0 11 2.424V1a1 1 0 0 0-2 0v1.424a3.228 3.228 0 0 0 0 6.152V19a1 1 0 1 0 2 0V8.576A3.243 3.243 0 0 0 13.25 5.5Z"></path>
+					</svg>Properties
+				</a>
+			</li>
+			<li class="me-2">
+				<a href="#" class="inline-flex items-center justify-center p-4 border-b-2 rounded-t-lg group text-sky-400 border-sky-400 active dark:text-sky-700 dark:border-sky-700" aria-current="page">
+					<svg class="w-4 h-4 me-2 text-sky-400 dark:text-sky-700" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 18">
+						<path d="M6.143 0H1.857A1.857 1.857 0 0 0 0 1.857v4.286C0 7.169.831 8 1.857 8h4.286A1.857 1.857 0 0 0 8 6.143V1.857A1.857 1.857 0 0 0 6.143 0Zm10 0h-4.286A1.857 1.857 0 0 0 10 1.857v4.286C10 7.169 10.831 8 11.857 8h4.286A1.857 1.857 0 0 0 18 6.143V1.857A1.857 1.857 0 0 0 16.143 0Zm-10 10H1.857A1.857 1.857 0 0 0 0 11.857v4.286C0 17.169.831 18 1.857 18h4.286A1.857 1.857 0 0 0 8 16.143v-4.286A1.857 1.857 0 0 0 6.143 10Zm10 0h-4.286A1.857 1.857 0 0 0 10 11.857v4.286c0 1.026.831 1.857 1.857 1.857h4.286A1.857 1.857 0 0 0 18 16.143v-4.286A1.857 1.857 0 0 0 16.143 10Z"></path>
+					</svg>Tables
+				</a>
+			</li>
+		</ul>
+	</div>
+}
+
 templ properties(data []models.PropertyValue, keyFilter string, modifiedOnly bool, allTags []models.Tag, isSelectedTag models.StringPredicate) {
 	@helpScreen()
-  <h1 class="text-sky-900 text-2xl p-3">Properties</h1>
 	<div>
 		<h2 class="text-sky-700 text-xl p-3">Filter</h2>
 		@propertyFilterForm(keyFilter, modifiedOnly, allTags, isSelectedTag)
@@ -38,105 +60,108 @@ templ properties(data []models.PropertyValue, keyFilter string, modifiedOnly boo
 }
 
 templ propertyFilterForm(keyFilter string, isModifiedOnly bool, allTags []models.Tag, isSelectedTag models.StringPredicate) {
-  <form id="propertyFilterForm" action="/properties" method="get" class="flex flex-col sm:flex-row max-w-xs sm:max-w-md mx-5 my-5 sm:items-start">
-      <div class="form-group-container flex flex-col mr-5 mb-2.5 sm:mb-0">
-          <div class="form-group mb-2.5">
-              <label for="keyFilter" class="block mb-1.25">Key Filter</label>
-              <input type="text" id="filterInput" name="keyFilter" value={ keyFilter } class="border"/>
-          </div>
-          <div class="form-group checkbox-group flex items-center mb-2.5">
-              <input type="hidden" id="modifiedOnly" name="modifiedOnly" value="false"/>
-              <input type="checkbox" id="modifiedOnlyCheckbox" value="{isModifiedOnly}"
-                class="mr-2.5"
-                if isModifiedOnly {
-                  checked
-                }
-              />
-              <label for="modifiedOnlyCheckbox">Modified Only</label>
-          </div>
-      </div>
-      <div class="form-group tags-select flex flex-col mb-2.5">
-          <label for="selectedTags" class="self-start mb-1.25">Tags</label>
-          <select id="selectedTags" name="selectedTags" class="border self-start w-24" multiple>
-            for _, tag := range allTags {
-              <option
-                value={ strconv.Itoa(tag.ID) }
-                if isSelectedTag( strconv.Itoa(tag.ID)) {
-                  selected
-                }
-              >{ tag.Tag }</option>
-            }
-          </select>
-      </div>
-  </form>
+	<form id="propertyFilterForm" action="/properties" method="get" class="flex flex-col sm:flex-row max-w-xs sm:max-w-md mx-5 my-5 sm:items-start">
+		<div class="form-group-container flex flex-col mr-5 mb-2.5 sm:mb-0">
+			<div class="form-group mb-2.5">
+				<label for="keyFilter" class="block mb-1.25">Key Filter</label>
+				<input type="text" id="filterInput" name="keyFilter" value={ keyFilter } class="border"/>
+			</div>
+			<div class="form-group checkbox-group flex items-center mb-2.5">
+				<input type="hidden" id="modifiedOnly" name="modifiedOnly" value="false"/>
+				<input
+					type="checkbox"
+					id="modifiedOnlyCheckbox"
+					value="{isModifiedOnly}"
+					class="mr-2.5"
+					if isModifiedOnly {
+						checked
+					}
+				/>
+				<label for="modifiedOnlyCheckbox">Modified Only</label>
+			</div>
+		</div>
+		<div class="form-group tags-select flex flex-col mb-2.5">
+			<label for="selectedTags" class="self-start mb-1.25">Tags</label>
+			<select id="selectedTags" name="selectedTags" class="border self-start w-24" multiple>
+				for _, tag := range allTags {
+					<option
+						value={ strconv.Itoa(tag.ID) }
+						if isSelectedTag( strconv.Itoa(tag.ID)) {
+							selected
+						}
+					>{ tag.Tag }</option>
+				}
+			</select>
+		</div>
+	</form>
 }
 
 templ propertyEditForm(allTags []models.Tag) {
-<form id="editForm" method="post" class="max-w-2xl mx-auto space-y-3">
-    <input type="hidden" id="editMode" name="mode" value="update"/>
-    <input type="hidden" id="editID" name="id" value="1"/>
-    <input type="hidden" id="editCurrentURL" name="currentURL" value=""/>
-    <div class="form-row flex">
-        <label for="editKey" class="block w-1/4 text-right mr-3">Key:</label>
-        <input type="text" id="editKey" name="key" value="" placeholder="The key should be unique, so prefix with the component name!" class="flex-grow p-1 border border-gray-300"/>
-    </div>
-    <div class="form-row flex">
-        <label for="editDescription" class="block w-1/4 text-right mr-3">Description:</label>
-        <input type="text" id="editDescription" name="description" placeholder="Put a clear description here" class="flex-grow p-1 border border-gray-300"/>
-    </div>
-    <div class="form-row flex">
-        <label for="editDefaultValue" class="block w-1/4 text-right mr-3">Default Value:</label>
-        <input type="text" id="editDefaultValue" name="defaultValue" placeholder="put a constant, or start with = for a formula" class="flex-grow p-1 border border-gray-300"/>
-    </div>
-    <div class="form-row flex tags-select">
-        <label for="editPropertyTags" class="block w-1/4 text-right mr-3">Property Tags</label>
-        <select id="editPropertyTags" name="propertyTags" class="border p-1" multiple>
-            for _, tag := range allTags {
-              <option
-                value={ strconv.Itoa(tag.ID) }
-              >{ tag.Tag }</option>
-            }
-        </select>
-    </div>
-    <div class="form-row flex">
-        <label for="editModifiedValue" class="block w-1/4 text-right mr-3">Modified Value:</label>
-        <input type="text" id="editModifiedValue" name="modifiedValue" placeholder="Specific for customer environment/domain" class="flex-grow p-1 border border-gray-300"/>
-    </div>
-    <div class="form-row flex hidden">
-        <input type="submit" value="Submit" class="block w-1/4 text-right mr-3"/>
-    </div>
-</form>
+	<form id="editForm" method="post" class="max-w-2xl mx-auto space-y-3">
+		<input type="hidden" id="editMode" name="mode" value="update"/>
+		<input type="hidden" id="editID" name="id" value="1"/>
+		<input type="hidden" id="editCurrentURL" name="currentURL" value=""/>
+		<div class="form-row flex">
+			<label for="editKey" class="block w-1/4 text-right mr-3">Key:</label>
+			<input type="text" id="editKey" name="key" value="" placeholder="The key should be unique, so prefix with the component name!" class="flex-grow p-1 border border-gray-300"/>
+		</div>
+		<div class="form-row flex">
+			<label for="editDescription" class="block w-1/4 text-right mr-3">Description:</label>
+			<input type="text" id="editDescription" name="description" placeholder="Put a clear description here" class="flex-grow p-1 border border-gray-300"/>
+		</div>
+		<div class="form-row flex">
+			<label for="editDefaultValue" class="block w-1/4 text-right mr-3">Default Value:</label>
+			<input type="text" id="editDefaultValue" name="defaultValue" placeholder="put a constant, or start with = for a formula" class="flex-grow p-1 border border-gray-300"/>
+		</div>
+		<div class="form-row flex tags-select">
+			<label for="editPropertyTags" class="block w-1/4 text-right mr-3">Property Tags</label>
+			<select id="editPropertyTags" name="propertyTags" class="border p-1" multiple>
+				for _, tag := range allTags {
+					<option
+						value={ strconv.Itoa(tag.ID) }
+					>{ tag.Tag }</option>
+				}
+			</select>
+		</div>
+		<div class="form-row flex">
+			<label for="editModifiedValue" class="block w-1/4 text-right mr-3">Modified Value:</label>
+			<input type="text" id="editModifiedValue" name="modifiedValue" placeholder="Specific for customer environment/domain" class="flex-grow p-1 border border-gray-300"/>
+		</div>
+		<div class="form-row flex hidden">
+			<input type="submit" value="Submit" class="block w-1/4 text-right mr-3"/>
+		</div>
+	</form>
 }
 
 templ propertyList(data []models.PropertyValue) {
-  <div class="m-5">
-	<table class="table-auto divide-y divide-gray-300 w-full" id="properties">
-		<thead>
-			<tr class="bg-white text-left">
-				<th class="px-6 py-2">Key</th>
-				<th class="px-6 py-2">Description</th>
-				<th class="px-6 py-2">Value</th>
-			</tr>
-		</thead>
-		<tbody class="divide-y divide-gray-300">
-			for _, item := range data {
-				<tr tabindex="0" data-id={ strconv.Itoa(item.ID) } class="border-solid border-1 border-sky-500">
-					<td class="font-mono px-6 py-2">{ item.Key }</td>
-					if item.Description.Valid {
-						<td class="px-6 py-2">{ item.Description.String }</td>
-					} else {
-						<td></td>
-					}
-					if item.Value.Valid {
-						<td class="px-6 py-2">{ item.Value.String }</td>
-					} else {
-						<td></td>
-					}
+	<div class="m-5">
+		<table class="table-auto divide-y divide-gray-300 w-full" id="properties">
+			<thead>
+				<tr class="bg-white text-left">
+					<th class="px-6 py-2">Key</th>
+					<th class="px-6 py-2">Description</th>
+					<th class="px-6 py-2">Value</th>
 				</tr>
-			}
-		</tbody>
-	</table>
-  </div>
+			</thead>
+			<tbody class="divide-y divide-gray-300">
+				for _, item := range data {
+					<tr tabindex="0" data-id={ strconv.Itoa(item.ID) } class="border-solid border-1 border-sky-500">
+						<td class="font-mono px-6 py-2">{ item.Key }</td>
+						if item.Description.Valid {
+							<td class="px-6 py-2">{ item.Description.String }</td>
+						} else {
+							<td></td>
+						}
+						if item.Value.Valid {
+							<td class="px-6 py-2">{ item.Value.String }</td>
+						} else {
+							<td></td>
+						}
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
 }
 
 templ helpScreen() {
