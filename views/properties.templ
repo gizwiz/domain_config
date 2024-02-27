@@ -6,7 +6,7 @@ import (
 	"github.com/gizwiz/domain_config/models"
 )
 
-templ PropertiesPage(propertyValues []models.PropertyValue, keyFilter string, modifiedOnly bool, allTags []models.Tag,  isSelectedTag models.StringPredicate) {
+templ PropertiesPage(tabName string, propertyValues []models.PropertyValue, keyFilter string, modifiedOnly bool, allTags []models.Tag,  isSelectedTag models.StringPredicate) {
 	<html>
 		<head>
 			<meta charset="UTF-8"/>
@@ -16,25 +16,40 @@ templ PropertiesPage(propertyValues []models.PropertyValue, keyFilter string, mo
 		</head>
 		<body>
 			<h1 class="text-sky-900 text-2xl p-3">Settings</h1>
-			@tabs()
-			@properties(propertyValues, keyFilter, modifiedOnly, allTags, isSelectedTag)
+      @tabs(tabName)
+      switch tabName {
+        case "properties":
+          @properties(propertyValues, keyFilter, modifiedOnly, allTags, isSelectedTag)
+        case "tables":
+          @tables()
+        default:
+          @unknownTab(tabName)
+      }
 		</body>
 	</html>
 }
 
-templ tabs() {
+templ unknownTab(tabName string) {
+  <div>Unknown tab: {tabName}</div>
+}
+
+templ tables() {
+ <div>todo</div>
+}
+  
+templ tabs(activeTab string) {
 	<div class="border-b border-gray-200 dark:border-gray-700">
 		<ul class="flex flex-wrap -mb-px text-base font-medium text-center text-gray-500 dark:text-gray-400">
 			<li class="me-2">
-				<a href="#" class="inline-flex items-center justify-center p-4 border-b-2 rounded-t-lg group border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300">
-					<svg class="w-4 h-4 me-2 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+        <a href="#" class={ activeTabAClass(activeTab == "properties") }>
+          <svg class={ activeTabSvgClass(activeTab == "properties") } aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
 						<path d="M5 11.424V1a1 1 0 1 0-2 0v10.424a3.228 3.228 0 0 0 0 6.152V19a1 1 0 1 0 2 0v-1.424a3.228 3.228 0 0 0 0-6.152ZM19.25 14.5A3.243 3.243 0 0 0 17 11.424V1a1 1 0 0 0-2 0v10.424a3.227 3.227 0 0 0 0 6.152V19a1 1 0 1 0 2 0v-1.424a3.243 3.243 0 0 0 2.25-3.076Zm-6-9A3.243 3.243 0 0 0 11 2.424V1a1 1 0 0 0-2 0v1.424a3.228 3.228 0 0 0 0 6.152V19a1 1 0 1 0 2 0V8.576A3.243 3.243 0 0 0 13.25 5.5Z"></path>
 					</svg>Properties
 				</a>
 			</li>
 			<li class="me-2">
-				<a href="#" class="inline-flex items-center justify-center p-4 border-b-2 rounded-t-lg group text-sky-400 border-sky-400 active dark:text-sky-700 dark:border-sky-700" aria-current="page">
-					<svg class="w-4 h-4 me-2 text-sky-400 dark:text-sky-700" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 18">
+        <a href="#" class={ activeTabAClass(activeTab == "tables") }>
+          <svg class={ activeTabSvgClass(activeTab == "tables") } aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 18">
 						<path d="M6.143 0H1.857A1.857 1.857 0 0 0 0 1.857v4.286C0 7.169.831 8 1.857 8h4.286A1.857 1.857 0 0 0 8 6.143V1.857A1.857 1.857 0 0 0 6.143 0Zm10 0h-4.286A1.857 1.857 0 0 0 10 1.857v4.286C10 7.169 10.831 8 11.857 8h4.286A1.857 1.857 0 0 0 18 6.143V1.857A1.857 1.857 0 0 0 16.143 0Zm-10 10H1.857A1.857 1.857 0 0 0 0 11.857v4.286C0 17.169.831 18 1.857 18h4.286A1.857 1.857 0 0 0 8 16.143v-4.286A1.857 1.857 0 0 0 6.143 10Zm10 0h-4.286A1.857 1.857 0 0 0 10 11.857v4.286c0 1.026.831 1.857 1.857 1.857h4.286A1.857 1.857 0 0 0 18 16.143v-4.286A1.857 1.857 0 0 0 16.143 10Z"></path>
 					</svg>Tables
 				</a>
@@ -42,6 +57,23 @@ templ tabs() {
 		</ul>
 	</div>
 }
+
+func activeTabAClass(active bool) string {
+  if active {
+    return "inline-flex items-center justify-center p-4 border-b-2 rounded-t-lg group text-sky-400 border-sky-400 active dark:text-sky-700 dark:border-sky-700"
+  } else {
+    return "inline-flex items-center justify-center p-4 border-b-2 rounded-t-lg group border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+  }
+}
+
+func activeTabSvgClass(active bool) string {
+  if active {
+		return "w-4 h-4 me-2 text-sky-400 dark:text-sky-700"
+  } else {
+	  return "w-4 h-4 me-2 text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-300"
+  }
+}
+
 
 templ properties(data []models.PropertyValue, keyFilter string, modifiedOnly bool, allTags []models.Tag, isSelectedTag models.StringPredicate) {
 	@helpScreen()
@@ -97,7 +129,7 @@ templ propertyFilterForm(keyFilter string, isModifiedOnly bool, allTags []models
 }
 
 templ propertyEditForm(allTags []models.Tag) {
-	<form id="editForm" method="post" class="max-w-2xl mx-auto space-y-3">
+	<form id="editForm" method="post" class="max-w-2xl space-y-3">
 		<input type="hidden" id="editMode" name="mode" value="update"/>
 		<input type="hidden" id="editID" name="id" value="1"/>
 		<input type="hidden" id="editCurrentURL" name="currentURL" value=""/>
@@ -115,7 +147,7 @@ templ propertyEditForm(allTags []models.Tag) {
 		</div>
 		<div class="form-row flex tags-select">
 			<label for="editPropertyTags" class="block w-1/4 text-right mr-3">Property Tags</label>
-			<select id="editPropertyTags" name="propertyTags" class="border p-1" multiple>
+			<select id="editPropertyTags" name="propertyTags" class="border p-1 w-24" multiple>
 				for _, tag := range allTags {
 					<option
 						value={ strconv.Itoa(tag.ID) }

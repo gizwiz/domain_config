@@ -46,6 +46,39 @@ func main() {
 //go:embed static/css/tailwind.css
 var tailwindCSS embed.FS
 
+func handlePage(tabName string, db *sql.DB, c echo.Context) error {
+	keyFilter := c.QueryParam("keyFilter")
+	modifiedOnly := c.QueryParam("modifiedOnly")
+	modifiedOnlyB := false
+	var err error
+	if modifiedOnly != "" {
+		modifiedOnlyB, err = strconv.ParseBool(modifiedOnly)
+		if err != nil {
+			return errors.Wrap(err, "can not convert modifiedOnly to bool")
+		}
+	}
+	allTags, err := database.FetchTags(db)
+	if err != nil {
+		return errors.Wrapf(err, "can not fetch properties")
+	}
+	selectedTags := c.QueryParams()["selectedTags"]
+	props, err := database.FetchProperties(db, keyFilter, modifiedOnlyB, selectedTags)
+	if err != nil {
+		return errors.Wrapf(err, "can not fetch properties")
+	}
+
+	// Use the properties templ to render the HTML table
+	//return c.Render(http.StatusOK, "", views.PropertiesPage(props, keyFilter, modifiedOnlyB, allTags, selectedTags))
+	return c.Render(http.StatusOK, "", views.PropertiesPage(tabName, props, keyFilter, modifiedOnlyB, allTags, func(tagID string) bool {
+		for _, selectedTag := range selectedTags {
+			if selectedTag == tagID {
+				return true
+			}
+		}
+		return false
+	}))
+}
+
 func mainWithErrors() error {
 
 	db, err := sql.Open("sqlite3", dbName)
@@ -77,36 +110,11 @@ func mainWithErrors() error {
 
 	// display the key-value table
 	e.GET("/properties", func(c echo.Context) error {
-		keyFilter := c.QueryParam("keyFilter")
-		modifiedOnly := c.QueryParam("modifiedOnly")
-		modifiedOnlyB := false
-		var err error
-		if modifiedOnly != "" {
-			modifiedOnlyB, err = strconv.ParseBool(modifiedOnly)
-			if err != nil {
-				return errors.Wrap(err, "can not convert modifiedOnly to bool")
-			}
-		}
-		allTags, err := database.FetchTags(db)
-		if err != nil {
-			return errors.Wrapf(err, "can not fetch properties")
-		}
-		selectedTags := c.QueryParams()["selectedTags"]
-		props, err := database.FetchProperties(db, keyFilter, modifiedOnlyB, selectedTags)
-		if err != nil {
-			return errors.Wrapf(err, "can not fetch properties")
-		}
+		return handlePage("properties", db, c)
+	})
 
-		// Use the properties templ to render the HTML table
-		//return c.Render(http.StatusOK, "", views.PropertiesPage(props, keyFilter, modifiedOnlyB, allTags, selectedTags))
-		return c.Render(http.StatusOK, "", views.PropertiesPage(props, keyFilter, modifiedOnlyB, allTags, func(tagID string) bool {
-			for _, selectedTag := range selectedTags {
-				if selectedTag == tagID {
-					return true
-				}
-			}
-			return false
-		}))
+	e.GET("/tables", func(c echo.Context) error {
+		return handlePage("tables", db, c)
 	})
 
 	e.GET("/calculate", func(c echo.Context) error {
