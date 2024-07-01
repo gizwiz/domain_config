@@ -1,0 +1,9 @@
+layout {
+  pane edit="." size="80%"
+  pane split_direction="vertical" {
+    pane command="air"
+    pane command="npm" {
+      args "run" "watch"
+    }
+  }
+}

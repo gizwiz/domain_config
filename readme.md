@@ -27,3 +27,7 @@ Assuming here that sqlite3 is already installed. On mac this can be done using `
     tmux pane1: npm run watch
     tmux pane2: air
     tmux pane3: nvim .
+
+or using zellij:
+
+    zellij --layout develop.kdl
