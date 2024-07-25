@@ -2,7 +2,7 @@ package views
 
 templ scripts() {
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', (event) => {
         var input = document.getElementById('filterInput');
         var tableRows = document.querySelectorAll('#properties tbody tr');
 
@@ -164,8 +164,7 @@ templ scripts() {
             }
         }
 
-        // Combined event listener for all keydown events
-        document.addEventListener('keydown', function(event) {
+        function handleKeydown(event) {
             if (isInputActive() && event.key !== 'Escape') {
                 return; // Exit early if an input or textarea is active
             }
@@ -204,6 +203,13 @@ templ scripts() {
                         input.select();
                         handled = true;
                     }
+                    break;
+
+                case '/':
+                    event.preventDefault();
+                    input.focus();
+                    input.select();
+                    handled = true;
                     break;
 
                 case 'n':
@@ -250,11 +256,39 @@ templ scripts() {
                     if (activeElement.tagName === 'TR') {
                         // c to calculate all properties
                         event.preventDefault();
-                        fetch('/calculate' )
-                            .then(response => response.json())
-                            .catch(error => console.error('Error calculating properties', error));
-                        window.location.reload()
-                        handled = true;
+
+                        // Change cursor to busy and disable key interactions
+                        document.body.classList.add('cursor-busy');
+                        document.removeEventListener('keydown', handleKeydown);
+
+                        fetch('/calculate')
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.text(); // Get response as text
+                        })
+                        .then(text => {
+                            console.log('Raw response text:', text); // Log the raw response text
+                            if (!text) {
+                                throw new Error('Empty response text');
+                            }
+                            try {
+                                const data = JSON.parse(text); // Parse JSON manually
+                                window.location.reload()
+                                console.log('Parsed data:', data);
+                            } catch (error) {
+                                console.error('Error parsing JSON:', error, 'Response text:', text);
+                            }
+                        })
+                        .catch(error => console.error('Error calculating properties:', error))
+                        .finally(() => {
+                            // Remove busy cursor and re-enable key interactions
+                            document.body.classList.remove('cursor-busy');
+                            document.addEventListener('keydown', handleKeydown);
+                        });
+
+
                     }
                     break;
             }
@@ -263,7 +297,7 @@ templ scripts() {
                 // Stop the default action to prevent the browser from scrolling
                 event.stopPropagation();
             }
-        });
+        }
 
         document.getElementById('modifiedOnlyCheckbox').addEventListener('change', function() {
             document.getElementById('modifiedOnly').value = this.checked ? 'true' : 'false';
@@ -281,6 +315,10 @@ templ scripts() {
                 this.form.submit();
             }
         });
+
+        // Combined event listener for all keydown events
+        document.addEventListener('keydown', handleKeydown);
+
     });
 </script>
 }

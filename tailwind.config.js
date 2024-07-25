@@ -3,7 +3,11 @@ export default {
   //content: ["./views/**/*.templ"], // this is where our templates are located
   content: ["./views/**/*.templ"], // this is where our templates are located
   theme: {
-    extend: {},
+    extend: {
+      cursor: {
+        busy: 'wait'
+      }
+    },
   },
   plugins: [],
 };

@@ -654,6 +654,10 @@ video {
   table-layout: auto;
 }
 
+.cursor-busy {
+  cursor: wait;
+}
+
 .flex-col {
   flex-direction: column;
 }

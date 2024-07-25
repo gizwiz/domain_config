@@ -2,11 +2,11 @@ package handlers
 
 import (
 	"database/sql"
-	"github.com/gizwiz/domain_config/models"
 	"net/http"
 	"strconv"
 
 	"github.com/gizwiz/domain_config/database"
+	"github.com/gizwiz/domain_config/models"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 )
