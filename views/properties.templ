@@ -95,7 +95,7 @@ templ propertyFilterForm(keyFilter string, isModifiedOnly bool, allTags []models
 	<form id="propertyFilterForm" action="/properties" method="get" class="flex flex-col sm:flex-row max-w-xs sm:max-w-md mx-5 my-5 sm:items-start">
 		<div class="form-group-container flex flex-col mr-5 mb-2.5 sm:mb-0">
 			<div class="form-group mb-2.5">
-				<label for="keyFilter" class="block mb-1.25">Key Filter</label>
+				<label for="filterInput" class="block mb-1.25">Key Filter</label>
 				<input type="text" id="filterInput" name="keyFilter" value={ keyFilter } class="border"/>
 			</div>
 			<div class="form-group checkbox-group flex items-center mb-2.5">

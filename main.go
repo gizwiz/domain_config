@@ -46,6 +46,9 @@ func main() {
 //go:embed static/css/tailwind.css
 var tailwindCSS embed.FS
 
+//go:embed static/js/htmx.min.js
+var htmxJS embed.FS
+
 func handlePage(tabName string, db *sql.DB, c echo.Context) error {
 	keyFilter := c.QueryParam("keyFilter")
 	modifiedOnly := c.QueryParam("modifiedOnly")
@@ -98,6 +101,15 @@ func mainWithErrors() error {
 	e.Debug = true
 
 	e.Renderer = &TemplRender{}
+
+	e.GET("/static/js/htmx.min.js", func(c echo.Context) error {
+		file, err := htmxJS.Open("static/js/htmx.min.js")
+		if err != nil {
+			return err // Properly handle the error
+		}
+		defer file.Close()
+		return c.Stream(http.StatusOK, "application/javascript", file)
+	})
 
 	e.GET("/static/css/tailwind.css", func(c echo.Context) error {
 		file, err := tailwindCSS.Open("static/css/tailwind.css")
