@@ -8,7 +8,6 @@ import (
 	"github.com/gizwiz/domain_config/models"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
-	"net/http"
 )
 
 func CalculateProperties(db *sql.DB, c echo.Context) error {
@@ -23,10 +22,6 @@ func CalculateProperties(db *sql.DB, c echo.Context) error {
 	if err != nil {
 		return errors.Wrapf(err, "can not calculate function properties")
 	}
-
-	return c.JSON(http.StatusOK, map[string]string{
-		"status": "success",
-	})
 
 	return nil
 }

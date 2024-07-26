@@ -118,7 +118,13 @@ func mainWithErrors() error {
 	})
 
 	e.GET("/calculate", func(c echo.Context) error {
-		return handlers.CalculateProperties(db, c)
+		err := handlers.CalculateProperties(db, c)
+		if err != nil {
+			return errors.Wrapf(err, "calculate properties")
+		}
+		return c.JSON(http.StatusOK, map[string]string{
+			"status": "success",
+		})
 	})
 
 	e.GET("/property/:id", func(c echo.Context) error {
