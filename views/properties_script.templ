@@ -217,7 +217,13 @@ templ scripts() {
                     // New record mode
                     event.preventDefault();
                     document.getElementById('new_property').style.display="";
-                    showEditForm('insert');
+                    htmx.ajax('GET', '/getPropertyForm', { target: '#new_property_form', swap: 'innerHTML' });
+                    // Add an event listener to focus on the first input field after content swap
+                    document.getElementById('new_property').addEventListener('htmx:afterSwap', function(evt) {
+                        if (evt.detail.target.id === 'new_property_form') {
+                            document.getElementById('editKey').focus();
+                        }
+                    }, { once: true }); // Remove listener after first trigger
                     handled = true;
                     break;
 
@@ -319,7 +325,6 @@ templ scripts() {
 
         // Combined event listener for all keydown events
         document.addEventListener('keydown', handleKeydown);
-
     });
 </script>
 }

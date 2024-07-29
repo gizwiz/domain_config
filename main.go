@@ -125,6 +125,14 @@ func mainWithErrors() error {
 		return handlePage("properties", db, c)
 	})
 
+	e.GET("/getPropertyForm", func(c echo.Context) error {
+		allTags, err := database.FetchTags(db)
+		if err != nil {
+			return errors.Wrapf(err, "can not fetch properties")
+		}
+		return c.Render(http.StatusOK, "getPropertiesForm", views.PropertyEditForm(allTags))
+	})
+
 	e.GET("/tables", func(c echo.Context) error {
 		return handlePage("tables", db, c)
 	})

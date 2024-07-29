@@ -83,7 +83,7 @@ templ properties(data []models.PropertyValue, keyFilter string, modifiedOnly boo
 	</div>
 	<div id="new_property" style="display:none;">
 		<h2 class="text-sky-700 text-xl p-3">Add new property</h2>
-		@propertyEditForm(allTags)
+		<span id="new_property_form"></span>
 	</div>
 	<div>
 		<h2 class="text-sky-700 text-xl p-3">Result</h2>
@@ -128,8 +128,8 @@ templ propertyFilterForm(keyFilter string, isModifiedOnly bool, allTags []models
 	</form>
 }
 
-templ propertyEditForm(allTags []models.Tag) {
-	<form id="editForm" method="post" class="max-w-2xl space-y-3">
+templ PropertyEditForm(allTags []models.Tag) {
+	<form id="editForm" method="post" class="max-w-2xl space-y-3" hx-post="/insert">
 		<input type="hidden" id="editMode" name="mode" value="update"/>
 		<input type="hidden" id="editID" name="id" value="1"/>
 		<input type="hidden" id="editCurrentURL" name="currentURL" value=""/>
