@@ -82,6 +82,26 @@ func handlePage(tabName string, db *sql.DB, c echo.Context) error {
 	}))
 }
 
+func propertyList(db *sql.DB, c echo.Context) error {
+	keyFilter := c.QueryParam("keyFilter")
+	modifiedOnly := c.QueryParam("modifiedOnly")
+	modifiedOnlyB := false
+	var err error
+	if modifiedOnly != "" {
+		modifiedOnlyB, err = strconv.ParseBool(modifiedOnly)
+		if err != nil {
+			return errors.Wrap(err, "can not convert modifiedOnly to bool")
+		}
+	}
+	selectedTags := c.QueryParams()["selectedTags"]
+	props, err := database.FetchProperties(db, keyFilter, modifiedOnlyB, selectedTags)
+	if err != nil {
+		return errors.Wrapf(err, "can not fetch properties")
+	}
+
+	return c.Render(http.StatusOK, "", views.PropertyList(props))
+}
+
 func mainWithErrors() error {
 
 	db, err := sql.Open("sqlite3", dbName)
@@ -123,6 +143,10 @@ func mainWithErrors() error {
 	// display the key-value table
 	e.GET("/properties", func(c echo.Context) error {
 		return handlePage("properties", db, c)
+	})
+
+	e.GET("/propertyList", func(c echo.Context) error {
+		return propertyList(db, c)
 	})
 
 	e.GET("/getPropertyForm", func(c echo.Context) error {

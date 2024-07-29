@@ -87,7 +87,7 @@ templ properties(data []models.PropertyValue, keyFilter string, modifiedOnly boo
 	</div>
 	<div>
 		<h2 class="text-sky-700 text-xl p-3">Result</h2>
-		@propertyList(data)
+		@PropertyList(data)
 	</div>
 }
 
@@ -111,6 +111,9 @@ templ propertyFilterForm(keyFilter string, isModifiedOnly bool, allTags []models
 				/>
 				<label for="modifiedOnlyCheckbox">Modified Only</label>
 			</div>
+			<div>
+				<a href="#" hx-get="/propertyList" hx-target="#property-list" hx-swap="outerHtml">Search</a>
+			</div>
 		</div>
 		<div class="form-group tags-select flex flex-col mb-2.5">
 			<label for="selectedTags" class="self-start mb-1.25">Tags</label>
@@ -129,7 +132,7 @@ templ propertyFilterForm(keyFilter string, isModifiedOnly bool, allTags []models
 }
 
 templ PropertyEditForm(allTags []models.Tag) {
-	<form id="editForm" method="post" class="max-w-2xl space-y-3" hx-post="/insert">
+	<form id="editForm" method="post" class="max-w-2xl space-y-3" hx-post="/insert" hx-trigger="submit" hx-on="htmx:afterRequest: propertyListRefresh">
 		<input type="hidden" id="editMode" name="mode" value="update"/>
 		<input type="hidden" id="editID" name="id" value="1"/>
 		<input type="hidden" id="editCurrentURL" name="currentURL" value=""/>
@@ -165,8 +168,8 @@ templ PropertyEditForm(allTags []models.Tag) {
 	</form>
 }
 
-templ propertyList(data []models.PropertyValue) {
-	<div class="m-5">
+templ PropertyList(data []models.PropertyValue) {
+	<div id="property-list" class="m-5">
 		<table class="table-auto divide-y divide-gray-300 w-full" id="properties">
 			<thead>
 				<tr class="bg-white text-left">

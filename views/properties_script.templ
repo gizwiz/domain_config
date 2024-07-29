@@ -294,8 +294,6 @@ templ scripts() {
                             document.body.classList.remove('cursor-busy');
                             document.addEventListener('keydown', handleKeydown);
                         });
-
-
                     }
                     break;
             }
@@ -305,6 +303,21 @@ templ scripts() {
                 event.stopPropagation();
             }
         }
+
+
+        // Function to refresh the property list after form submission
+        function propertyListRefresh(event) {
+            // Check if the event is related to the form submission
+            if (event.detail.target.id === 'editForm') {
+                htmx.ajax('GET', '/propertyList', {
+                    target: '#property-list',
+                    swap: 'outerHTML'
+                });
+            }
+        }
+
+        // Register the custom event handler
+        document.body.addEventListener('htmx:afterRequest', propertyListRefresh);
 
         document.getElementById('modifiedOnlyCheckbox').addEventListener('change', function() {
             document.getElementById('modifiedOnly').value = this.checked ? 'true' : 'false';
