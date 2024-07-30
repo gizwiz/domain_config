@@ -16,6 +16,12 @@ templ PropertiesPage(tabName string, propertyValues []models.PropertyValue, keyF
 		</head>
 		<body>
 			<h1 class="text-sky-900 text-2xl p-3">Settings</h1>
+			<div id="error-div" style="display:none" class="mx-5" role="alert">
+              <div class="bg-red-500 text-white font-bold rounded-t px-4 py-2">Error</div>
+              <div class="border border-t-0 border-red-400 rounded-b bg-red-100 px-4 py-3 text-red-700">
+                <p id="error-msg"></p>
+              </div>
+            </div>
       @tabs(tabName)
       switch tabName {
         case "properties":

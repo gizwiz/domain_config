@@ -309,6 +309,7 @@ templ scripts() {
         function propertyListRefresh(event) {
             // Check if the event is related to the form submission
             if (event.detail.target.id === 'editForm') {
+                document.getElementById('error-div').style.display = 'none';
                 htmx.ajax('GET', '/propertyList', {
                     target: '#property-list',
                     swap: 'outerHTML'
@@ -318,6 +319,21 @@ templ scripts() {
 
         // Register the custom event handler
         document.body.addEventListener('htmx:afterRequest', propertyListRefresh);
+
+        document.addEventListener('htmx:responseError', function(evt) {
+            var response = evt.detail.xhr;
+            if (response.status >= 400 && response.status < 600) {
+                errorMessage = response.responseText;
+                try {
+                    const errorData = JSON.parse(response.responseText);
+                    errorMessage = errorData.error;
+                } catch (e) {
+                    // ignore as we will simply show the full json then
+                }
+                document.getElementById('error-msg').innerHTML = errorMessage;
+                document.getElementById('error-div').style.display = 'block';
+            }
+        });
 
         document.getElementById('modifiedOnlyCheckbox').addEventListener('change', function() {
             document.getElementById('modifiedOnly').value = this.checked ? 'true' : 'false';
