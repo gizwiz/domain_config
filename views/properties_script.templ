@@ -310,7 +310,10 @@ templ scripts() {
             // Check if the event is related to the form submission
             if (event.detail.target.id === 'editForm') {
                 document.getElementById('error-div').style.display = 'none';
-                htmx.ajax('GET', '/propertyList', {
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const url = '/propertyList?' + urlParams.toString();
+                htmx.ajax('GET', url, {
                     target: '#property-list',
                     swap: 'outerHTML'
                 });
