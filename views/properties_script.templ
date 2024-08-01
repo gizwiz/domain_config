@@ -41,7 +41,6 @@ templ scripts() {
             for (var i = 0; i < select.options.length; i++) {
                 var option = select.options[i];
                 // Check if the current option's value is in the propertyTags array
-                console.log("option:", option.value, propertyTags, propertyTags.includes(parseInt(option.value)));
                 if (propertyTags.includes(parseInt(option.value))) {
                     // If it is, mark it as selected
                     option.selected = true;
@@ -103,8 +102,26 @@ templ scripts() {
         function editFormSubmitHandler(event) {
             event.preventDefault();
             
-            // Get the form
-            var form = event.target;
+            // Find the closest form element
+            var form = event.target.closest('form');
+            if (!(form instanceof HTMLFormElement)) {
+                console.error('editFormSubmitHandler: Unable to find form element');
+                return;
+            }
+            
+            // Create a new FormData object
+            var formData = new FormData(form);
+            
+            // Get all input fields
+            var inputs = form.querySelectorAll('input, textarea, select');
+            
+            // Iterate through all inputs
+            inputs.forEach(function(input) {
+                // If the input is empty or undefined, remove it from formData
+                if (input.value === '' || input.value === 'undefined') {
+                    formData.delete(input.name);
+                }
+            });
             
             // Get the tags select element
             var tagsSelect = form.querySelector('#editPropertyTags');
@@ -112,16 +129,12 @@ templ scripts() {
             if (tagsSelect) {
                 // Create a hidden input for each selected tag
                 Array.from(tagsSelect.selectedOptions).forEach(function(option, index) {
-                    var hiddenInput = document.createElement('input');
-                    hiddenInput.type = 'hidden';
-                    hiddenInput.name = 'tags[' + index + ']';
-                    hiddenInput.value = option.value;
-                    form.appendChild(hiddenInput);
+                    formData.append('tags[' + index + ']', option.value);
                 });
             }
             
-            // Trigger the HTMX submission
-            htmx.trigger(form, 'htmx:submit');
+            // Use the modified formData for submission
+            htmx.trigger(form, 'htmx:submit', { formData: formData });
             
             // Remove the temporary hidden inputs after submission
             if (tagsSelect) {
@@ -138,15 +151,15 @@ templ scripts() {
             if (submitButton) {
                 submitButton.addEventListener('click', function(event) {
                     event.preventDefault();
-                    editFormSubmitHandler.call(form, event);
+                    editFormSubmitHandler(event);
                 });
             }
 
             // Add event listener for tags select
             var tagsSelect = form.querySelector('#editPropertyTags');
             if (tagsSelect) {
-                tagsSelect.addEventListener('change', function() {
-                    editFormSubmitHandler.call(form, new Event('submit'));
+                tagsSelect.addEventListener('change', function(event) {
+                    editFormSubmitHandler(event);
                 });
             }
         }
@@ -251,11 +264,11 @@ templ scripts() {
                                     var editForm = document.getElementById('editForm');
                                     if (editForm) {
                                         // Populate form fields here
-                                        document.getElementById('editID').value = data.Property.id;
-                                        document.getElementById('editKey').value = data.Property.key;
-                                        document.getElementById('editDescription').value = data.Property.description;
-                                        document.getElementById('editDefaultValue').value = data.Property.default_value;
-                                        document.getElementById('editModifiedValue').value = data.Property.modified_value;
+                                        document.getElementById('editID').value = data.Property.id || '';
+                                        document.getElementById('editKey').value = data.Property.key || '';
+                                        document.getElementById('editDescription').value = data.Property.description || '';
+                                        document.getElementById('editDefaultValue').value = data.Property.default_value || '';
+                                        document.getElementById('editModifiedValue').value = data.Property.modified_value || '';
 
                                         // Set the selected tags
                                         setSelectedTags(data.TagIDs);
