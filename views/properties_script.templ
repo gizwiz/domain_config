@@ -41,6 +41,7 @@ templ scripts() {
             for (var i = 0; i < select.options.length; i++) {
                 var option = select.options[i];
                 // Check if the current option's value is in the propertyTags array
+                console.log("option:", option.value, propertyTags, propertyTags.includes(parseInt(option.value)));
                 if (propertyTags.includes(parseInt(option.value))) {
                     // If it is, mark it as selected
                     option.selected = true;
@@ -101,9 +102,54 @@ templ scripts() {
 
         function editFormSubmitHandler(event) {
             event.preventDefault();
-            htmx.trigger(this, 'htmx:submit');
+            
+            // Get the form
+            var form = event.target;
+            
+            // Get the tags select element
+            var tagsSelect = form.querySelector('#editPropertyTags');
+            
+            if (tagsSelect) {
+                // Create a hidden input for each selected tag
+                Array.from(tagsSelect.selectedOptions).forEach(function(option, index) {
+                    var hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'tags[' + index + ']';
+                    hiddenInput.value = option.value;
+                    form.appendChild(hiddenInput);
+                });
+            }
+            
+            // Trigger the HTMX submission
+            htmx.trigger(form, 'htmx:submit');
+            
+            // Remove the temporary hidden inputs after submission
+            if (tagsSelect) {
+                form.querySelectorAll('input[name^="tags["]').forEach(function(input) {
+                    input.remove();
+                });
+            }
         }
 
+        function setupFormEventListeners(form) {
+            form.addEventListener('submit', editFormSubmitHandler);
+
+            var submitButton = form.querySelector('input[type="submit"]');
+            if (submitButton) {
+                submitButton.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    editFormSubmitHandler.call(form, event);
+                });
+            }
+
+            // Add event listener for tags select
+            var tagsSelect = form.querySelector('#editPropertyTags');
+            if (tagsSelect) {
+                tagsSelect.addEventListener('change', function() {
+                    editFormSubmitHandler.call(form, new Event('submit'));
+                });
+            }
+        }
 
         function handleKeydown(event) {
             if (isInputActive() && event.key !== 'Escape') {
@@ -165,15 +211,7 @@ templ scripts() {
                             newForm.setAttribute('hx-post', '/insert');
 
                             // Add event listeners to the new form
-                            newForm.addEventListener('submit', editFormSubmitHandler);
-
-                            var submitButton = newForm.querySelector('input[type="submit"]');
-                            if (submitButton) {
-                                submitButton.addEventListener('click', function(event) {
-                                    event.preventDefault();
-                                    editFormSubmitHandler.call(newForm, event);
-                                });
-                            }
+                            setupFormEventListeners(newForm);
 
                             document.getElementById('editKey').focus();
                         }
@@ -219,6 +257,9 @@ templ scripts() {
                                         document.getElementById('editDefaultValue').value = data.Property.default_value;
                                         document.getElementById('editModifiedValue').value = data.Property.modified_value;
 
+                                        // Set the selected tags
+                                        setSelectedTags(data.TagIDs);
+
                                         // Explicitly set edit mode
                                         document.getElementById('editMode').value = 'update';
                                         editForm.setAttribute('hx-post', '/update');
@@ -234,16 +275,8 @@ templ scripts() {
                                             newRow.appendChild(newCell);
                                             targetRow.parentNode.insertBefore(newRow, targetRow.nextSibling);
 
-                                            // Add event listeners after inserting the form
-                                            editForm.addEventListener('submit', editFormSubmitHandler);
-
-                                            var submitButton = editForm.querySelector('input[type="submit"]');
-                                            if (submitButton) {
-                                                submitButton.addEventListener('click', function(event) {
-                                                    event.preventDefault();
-                                                    editFormSubmitHandler.call(editForm, event);
-                                                });
-                                            }
+                                            // Set up event listeners
+                                            setupFormEventListeners(editForm);
 
                                             document.getElementById('editKey').focus();
                                         }
