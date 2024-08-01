@@ -31,6 +31,7 @@ templ PropertiesPage(tabName string, propertyValues []models.PropertyValue, keyF
         default:
           @unknownTab(tabName)
       }
+         <div id="temp-container" style="display: none"></div>
 		</body>
 	</html>
 }
@@ -135,8 +136,8 @@ templ propertyFilterForm(keyFilter string, isModifiedOnly bool, allTags []models
 }
 
 templ PropertyEditForm(allTags []models.Tag) {
-	<form id="editForm" method="post" class="max-w-2xl space-y-3" hx-post="/insert" hx-trigger="submit" hx-on="htmx:afterRequest: propertyListRefresh">
-		<input type="hidden" id="editMode" name="mode" value="update"/>
+	<form id="editForm" class="max-w-2xl space-y-3" hx-post="/insert" hx-trigger="htmx:submit" hx-on="htmx:afterRequest: propertyListRefresh" >
+		<input type="hidden" id="editMode" name="mode" value="insert"/>
 		<input type="hidden" id="editID" name="id" value="1"/>
 		<input type="hidden" id="editCurrentURL" name="currentURL" value=""/>
 		<div class="form-row flex">
@@ -165,8 +166,8 @@ templ PropertyEditForm(allTags []models.Tag) {
 			<label for="editModifiedValue" class="block w-1/4 text-right mr-3">Modified Value:</label>
 			<input type="text" id="editModifiedValue" name="modifiedValue" placeholder="Specific for customer environment/domain" class="flex-grow p-1 border border-gray-300"/>
 		</div>
-		<div class="form-row flex hidden">
-			<input type="submit" value="Submit" class="block w-1/4 text-right mr-3"/>
+		<div class="form-row flex">
+			<input type="submit" value="Save" class="block w-1/4 text-right mr-3 bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"/>
 		</div>
 	</form>
 }

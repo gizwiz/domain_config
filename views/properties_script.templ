@@ -67,86 +67,6 @@ templ scripts() {
             });
         }
 
-
-        // edit form for a property
-        var editForm = document.getElementById('editForm');
-        var editModeInput = document.getElementById('editMode');
-        var editIdInput = document.getElementById('editID');
-        var editKeyInput = document.getElementById('editKey');
-        var editDescriptionInput = document.getElementById('editDescription')
-        var editDefaultValueInput = document.getElementById('editDefaultValue')
-        var editModifiedValueInput = document.getElementById('editModifiedValue')
-        var editPropertyTagsInput = document.getElementById('editPropertyTags')
-        var editCurrentURLInput = document.getElementById('editCurrentURL')
-
-
-        function showEditForm(mode, id = -1, key = '', description = '', defaultValue = '', modifiedValue = '', propertyTags=[], activeRow) {
-            disableOtherRows(activeRow)
-
-            var formAction = mode === 'insert' ? '/insert' : '/update';
-            editForm.setAttribute('action', formAction);
-
-            editModeInput.value = mode;
-            editIdInput.value = id;
-            editKeyInput.value = key;
-            editDescriptionInput.value = description;
-            editDefaultValueInput.value = defaultValue;
-            editModifiedValueInput.value = modifiedValue;
-            editPropertyTagsInput.value = propertyTags;
-            editCurrentURLInput.value = window.location.href;
-
-            // Move the form to the active row's position in "edit" mode, not for a new property
-            if (mode !== 'insert') {
-                // Create a new row and a cell that spans all columns
-                var newRow = document.createElement('tr');
-                var newCell = document.createElement('td');
-                var colSpan = activeRow.children.length; // Assuming the row has 'td' elements
-                newCell.colSpan = colSpan;
-
-                // Append the form to the new cell, and the cell to the new row
-                newCell.appendChild(editForm);
-                newRow.appendChild(newCell);
-
-                // Insert the new row after the active row
-                activeRow.after(newRow);
-
-                // add the active class to the row
-                activeRow.classList.add('active-row')
-
-               // update selected tags for this property
-               setSelectedTags(propertyTags);
-            }
-
-            editForm.style.display = 'block';
-            editKeyInput.focus();
-        }
-
-        function hideEditForm() {
-            enableAllRows()
-
-            document.getElementById('editForm').style.display = 'none';
-            var editFormParent = editForm.parentNode;
-
-            // Move the form back to its original location
-            var originalLocation = document.getElementById('new_property');
-            if (originalLocation) {
-                originalLocation.appendChild(editForm);
-            }
-            // Check if the form is inside a <td> and <tr>
-            if (editFormParent && editFormParent.nodeName === 'TD') {
-                var editFormRow = editFormParent.parentNode;
-                if (editFormRow && editFormRow.nodeName === 'TR') {
-                    // Remove the entire row
-                    editFormRow.remove();
-                }
-            }
-            // Remove active class from all rows
-            var rows = document.querySelectorAll('#properties tbody tr');
-            rows.forEach(function(row) {
-                row.classList.remove('active-row');
-            });
-        }
-
         function isInputActive() {
             var activeElement = document.activeElement;
             return activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA';
@@ -165,6 +85,28 @@ templ scripts() {
             }
         }
 
+        function hideEditForm() {
+            document.getElementById('new_property').style.display="none";
+
+            var editForm = document.getElementById('editForm');
+            if (editForm) {
+                editForm.remove();
+            }
+
+            var editRow = document.getElementById('edit-row');
+            if (editRow) {
+                editRow.remove();
+            }
+        }
+
+        function editFormSubmitHandler(event) {
+            console.log('Form submit handler called');
+            event.preventDefault();
+            console.log('Default prevented, triggering htmx:submit');
+            htmx.trigger(this, 'htmx:submit');
+        }
+
+
         function handleKeydown(event) {
             if (isInputActive() && event.key !== 'Escape') {
                 return; // Exit early if an input or textarea is active
@@ -182,7 +124,6 @@ templ scripts() {
                 case 'Escape':
                     event.preventDefault();
                     toggleHelpScreen(false);
-                    document.getElementById('new_property').style.display="none";
                     hideEditForm();
                     refocus();
                     break;
@@ -216,14 +157,36 @@ templ scripts() {
                 case 'n':
                     // New record mode
                     event.preventDefault();
+                    hideEditForm();
                     document.getElementById('new_property').style.display="";
-                    htmx.ajax('GET', '/getPropertyForm', { target: '#new_property_form', swap: 'innerHTML' });
-                    // Add an event listener to focus on the first input field after content swap
-                    document.getElementById('new_property').addEventListener('htmx:afterSwap', function(evt) {
-                        if (evt.detail.target.id === 'new_property_form') {
+                    htmx.ajax('GET', '/getPropertyForm', { target: '#new_property_form', swap: 'innerHTML' }).then(() => {
+                        var newForm = document.getElementById('editForm');
+                        if (newForm) {
+                            // Explicitly set insert mode
+                            document.getElementById('editMode').value = 'insert';
+                            newForm.setAttribute('hx-post', '/insert');
+                
+                            // Add event listeners to the new form
+                            newForm.addEventListener('submit', editFormSubmitHandler);
+                            console.log('Event listener added to new form');
+                
+                            var submitButton = newForm.querySelector('input[type="submit"]');
+                            if (submitButton) {
+                                submitButton.addEventListener('click', function(event) {
+                                    console.log('Submit button clicked');
+                                    event.preventDefault();
+                                    editFormSubmitHandler.call(newForm, event);
+                                });
+                                console.log('Click listener added to submit button');
+                            } else {
+                                console.error('Submit button not found');
+                            }
+                
                             document.getElementById('editKey').focus();
+                        } else {
+                            console.error('New form not found');
                         }
-                    }, { once: true }); // Remove listener after first trigger
+                    });
                     handled = true;
                     break;
 
@@ -244,16 +207,71 @@ templ scripts() {
                         handled = true;
                     }
                     break;
-
                 case 'e':
                     if (activeElement.tagName === 'TR') {
-                        // e to edit the row
+                        console.log('Edit mode activated');
                         event.preventDefault();
-                        var id = activeElement.dataset.id; // Assuming each row has a 'data-id' attribute
+                        hideEditForm();
+                        var id = activeElement.dataset.id;
                         fetch('/property/' + id)
                             .then(response => response.json())
                             .then(data => {
-                                showEditForm('update', data.Property.id, data.Property.key, data.Property.description, data.Property.default_value, data.Property.modified_value, data.TagIDs, activeElement);
+                                console.log('Property data fetched:', data);
+                                htmx.ajax('GET', '/getPropertyForm', {
+                                    target: '#temp-container',
+                                    swap: 'innerHTML'
+                                }).then(() => {
+                                    console.log('Form template loaded');
+                                    var editForm = document.getElementById('editForm');
+                                    if (editForm) {
+                                        console.log('Edit form found', data);
+                                        // Populate form fields here
+                                        document.getElementById('editID').value = data.Property.id;
+                                        document.getElementById('editKey').value = data.Property.key;
+                                        document.getElementById('editDescription').value = data.Property.description;
+                                        document.getElementById('editDefaultValue').value = data.Property.default_value;
+                                        document.getElementById('editModifiedValue').value = data.Property.modified_value;
+
+                                        // Update the hx-post attribute to '/update'
+                                        document.getElementById('editMode').value = 'update';
+                                        editForm.setAttribute('hx-post', '/update');
+
+                                        // Move the form to the desired location in the DOM
+                                        var targetRow = document.querySelector('tr[data-id="' + id + '"]');
+                                        if (targetRow) {
+                                            var newRow = document.createElement('tr');
+                                            newRow.id = 'edit-row';
+                                            var newCell = document.createElement('td');
+                                            newCell.colSpan = targetRow.cells.length;
+                                            newCell.appendChild(editForm);
+                                            newRow.appendChild(newCell);
+                                            targetRow.parentNode.insertBefore(newRow, targetRow.nextSibling);
+                                            console.log('Form inserted into DOM');
+
+                                            // Add event listeners after inserting the form
+                                            editForm.addEventListener('submit', editFormSubmitHandler);
+                                            console.log('Event listener added to form');
+
+                                            var submitButton = editForm.querySelector('input[type="submit"]');
+                                            if (submitButton) {
+                                                submitButton.addEventListener('click', function(event) {
+                                                    console.log('Submit button clicked');
+                                                    event.preventDefault();
+                                                    editFormSubmitHandler.call(editForm, event);
+                                                });
+                                                console.log('Click listener added to submit button');
+                                            } else {
+                                                console.error('Submit button not found');
+                                            }
+
+                                            document.getElementById('editKey').focus();
+                                        } else {
+                                            console.error('Target row not found');
+                                        }
+                                    } else {
+                                        console.error('Edit form not found');
+                                    }
+                                });
                             })
                             .catch(error => console.error('Error fetching property:', error));
                         handled = true;
@@ -348,16 +366,15 @@ templ scripts() {
         });
 
         // Event listener to submit the form when Enter is pressed in the input
-        input.addEventListener('keyup', function(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                this.form.submit();
-            }
-        });
+//        input.addEventListener('keyup', function(event) {
+//            if (event.key === 'Enter') {
+//                event.preventDefault();
+//                this.form.submit();
+//            }
+//        });
 
         // Combined event listener for all keydown events
         document.addEventListener('keydown', handleKeydown);
     });
 </script>
 }
-

@@ -30,7 +30,7 @@ func InsertProperty(db *sql.DB, c echo.Context) error {
 		return errors.Wrapf(err, "can not insert property %s", key)
 	}
 
-	err = CalculateProperties(db, c) //TODO is now returning json, so he does not do the redirect below ?
+	err = CalculateProperties(db, c)
 	if err != nil {
 		return errors.Wrapf(err, "can not calculate properties after inset property %s", key)
 	}
