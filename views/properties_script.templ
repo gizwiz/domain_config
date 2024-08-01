@@ -100,9 +100,7 @@ templ scripts() {
         }
 
         function editFormSubmitHandler(event) {
-            console.log('Form submit handler called');
             event.preventDefault();
-            console.log('Default prevented, triggering htmx:submit');
             htmx.trigger(this, 'htmx:submit');
         }
 
@@ -165,26 +163,19 @@ templ scripts() {
                             // Explicitly set insert mode
                             document.getElementById('editMode').value = 'insert';
                             newForm.setAttribute('hx-post', '/insert');
-                
+
                             // Add event listeners to the new form
                             newForm.addEventListener('submit', editFormSubmitHandler);
-                            console.log('Event listener added to new form');
-                
+
                             var submitButton = newForm.querySelector('input[type="submit"]');
                             if (submitButton) {
                                 submitButton.addEventListener('click', function(event) {
-                                    console.log('Submit button clicked');
                                     event.preventDefault();
                                     editFormSubmitHandler.call(newForm, event);
                                 });
-                                console.log('Click listener added to submit button');
-                            } else {
-                                console.error('Submit button not found');
                             }
-                
+
                             document.getElementById('editKey').focus();
-                        } else {
-                            console.error('New form not found');
                         }
                     });
                     handled = true;
@@ -209,22 +200,18 @@ templ scripts() {
                     break;
                 case 'e':
                     if (activeElement.tagName === 'TR') {
-                        console.log('Edit mode activated');
                         event.preventDefault();
                         hideEditForm();
                         var id = activeElement.dataset.id;
                         fetch('/property/' + id)
                             .then(response => response.json())
                             .then(data => {
-                                console.log('Property data fetched:', data);
                                 htmx.ajax('GET', '/getPropertyForm', {
                                     target: '#temp-container',
                                     swap: 'innerHTML'
                                 }).then(() => {
-                                    console.log('Form template loaded');
                                     var editForm = document.getElementById('editForm');
                                     if (editForm) {
-                                        console.log('Edit form found', data);
                                         // Populate form fields here
                                         document.getElementById('editID').value = data.Property.id;
                                         document.getElementById('editKey').value = data.Property.key;
@@ -232,7 +219,7 @@ templ scripts() {
                                         document.getElementById('editDefaultValue').value = data.Property.default_value;
                                         document.getElementById('editModifiedValue').value = data.Property.modified_value;
 
-                                        // Update the hx-post attribute to '/update'
+                                        // Explicitly set edit mode
                                         document.getElementById('editMode').value = 'update';
                                         editForm.setAttribute('hx-post', '/update');
 
@@ -246,30 +233,20 @@ templ scripts() {
                                             newCell.appendChild(editForm);
                                             newRow.appendChild(newCell);
                                             targetRow.parentNode.insertBefore(newRow, targetRow.nextSibling);
-                                            console.log('Form inserted into DOM');
 
                                             // Add event listeners after inserting the form
                                             editForm.addEventListener('submit', editFormSubmitHandler);
-                                            console.log('Event listener added to form');
 
                                             var submitButton = editForm.querySelector('input[type="submit"]');
                                             if (submitButton) {
                                                 submitButton.addEventListener('click', function(event) {
-                                                    console.log('Submit button clicked');
                                                     event.preventDefault();
                                                     editFormSubmitHandler.call(editForm, event);
                                                 });
-                                                console.log('Click listener added to submit button');
-                                            } else {
-                                                console.error('Submit button not found');
                                             }
 
                                             document.getElementById('editKey').focus();
-                                        } else {
-                                            console.error('Target row not found');
                                         }
-                                    } else {
-                                        console.error('Edit form not found');
                                     }
                                 });
                             })
