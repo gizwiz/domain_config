@@ -1,13 +1,13 @@
 # file: .air.toml
 
 root = "."
-tmp_dir = "bin"
+tmp_dir = "tmp"
 
 [build]
-  bin = "./bin/main"
-  cmd = "templ generate && go build -o ./bin/main ."
+  cmd = "templ generate && CGO_ENABLED=0 go build -o ./tmp/main ."
+  bin = "./tmp/main"
   delay = 1000
-  exclude_dir = ["static", "node_modules"]
+  exclude_dir = ["assets", "tmp", "vendor", "node_modules", "static"]
   exclude_regex = [".*_templ.go"]
   exclude_unchanged = false
   follow_symlink = false
@@ -17,6 +17,10 @@ tmp_dir = "bin"
   send_interrupt = false
   stop_on_error = true
 
+[run]
+  cmd = "./tmp/main"
+  output = "air_app.log"
+
 [color]
   build = "yellow"
   main = "magenta"
@@ -24,8 +28,9 @@ tmp_dir = "bin"
   watcher = "cyan"
 
 [log]
-  time = false
+  time = true
+  main_only = false
+  level = debug
 
 [misc]
   clean_on_exit = true
-

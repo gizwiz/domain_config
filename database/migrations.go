@@ -39,7 +39,7 @@ func ApplyLatestDBMigrations(db *sql.DB) error {
 	// Create a migrate instance
 	m, err := migrate.NewWithDatabaseInstance(
 		"file://"+tempDir,
-		"sqlite3",
+		"sqlite",
 		driver,
 	)
 	if err != nil {

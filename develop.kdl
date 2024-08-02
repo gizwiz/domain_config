@@ -7,9 +7,6 @@ layout {
             }
             pane split_direction="vertical" {
                 pane command="air"
-                pane command="go" {
-                    args "run" "."
-                }
             }
         }
     }

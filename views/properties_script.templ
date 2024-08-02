@@ -162,6 +162,14 @@ templ scripts() {
                     editFormSubmitHandler(event);
                 });
             }
+
+            // Store the current focus when the form gains focus
+            form.addEventListener('focus', function() {
+                var focusedRow = document.activeElement.closest('tr');
+                if (focusedRow) {
+                    localStorage.setItem('focusedRow', focusedRow.getAttribute('data-id'));
+                }
+            }, true);
         }
 
         function handleKeydown(event) {
@@ -357,6 +365,9 @@ templ scripts() {
                 htmx.ajax('GET', url, {
                     target: '#property-list',
                     swap: 'outerHTML'
+                }).then(() => {
+                    // After the list is refreshed, restore focus
+                    refocus();
                 });
             }
         }

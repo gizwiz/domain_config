@@ -14,8 +14,8 @@ import (
 	"github.com/gizwiz/domain_config/handlers"
 	"github.com/gizwiz/domain_config/views"
 	"github.com/labstack/echo/v4"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/pkg/errors"
+	_ "modernc.org/sqlite"
 )
 
 const dbName = "main.db"
@@ -104,7 +104,7 @@ func propertyList(db *sql.DB, c echo.Context) error {
 
 func mainWithErrors() error {
 
-	db, err := sql.Open("sqlite3", dbName)
+	db, err := sql.Open("sqlite", dbName)
 	if err != nil {
 		return errors.Wrapf(err, "Error opening database: %s", dbName)
 	}
