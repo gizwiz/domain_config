@@ -5,9 +5,12 @@ import (
 	"encoding/xml"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
+	"regexp"
+	"sort"
+	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -36,7 +39,42 @@ type Row struct {
 	Separator     string `xml:"separator,attr"`
 }
 
+func transformFormula(formula string, cellToKey map[string]string, sheetName string, compositeKey string) string {
+	if strings.HasPrefix(formula, "=CONCATENATE(") {
+		// Remove the "=CONCATENATE(" prefix and the closing ")"
+		args := formula[len("=CONCATENATE(") : len(formula)-1]
+		// Split the arguments by comma
+		argList := strings.Split(args, ",")
+		// Replace cell references with keys
+		for i, arg := range argList {
+			argList[i] = replaceCellReferences(arg, cellToKey, sheetName, compositeKey)
+		}
+		// Join the arguments with " + "
+		return "=" + strings.Join(argList, " + ")
+	}
+	return replaceCellReferences(formula, cellToKey, sheetName, compositeKey)
+}
+
+func replaceCellReferences(formula string, cellToKey map[string]string, sheetName string, compositeKey string) string {
+	re := regexp.MustCompile(`\$?[A-Z]+\$?\d+`)
+	return re.ReplaceAllStringFunc(formula, func(cellRef string) string {
+		// Normalize cell reference by removing $ signs
+		normalizedCellRef := strings.ReplaceAll(cellRef, "$", "")
+		fullCellRef := fmt.Sprintf("%s!%s", sheetName, normalizedCellRef)
+		if key, exists := cellToKey[fullCellRef]; exists {
+			log.Printf("Cell reference FOUND: %s in formula: %s, sheet: %s, formula: %s, compositeKey: %s, key found: %s", cellRef, formula, sheetName, formula, compositeKey, key)
+			return key
+		}
+		log.Printf("Cell reference not found: %s in formula: %s, sheet: %s, formula: %s, compositeKey: %s", cellRef, formula, sheetName, formula, compositeKey)
+		return cellRef
+	})
+}
+
 func main() {
+	// Configure logging to output to standard error
+	log.SetOutput(os.Stderr)
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
 	xmlPath := flag.String("xml", "", "Path to the config.xml file")
 	newDB := flag.Bool("newdb", false, "Remove the previous database if true")
 	flag.Parse()
@@ -57,7 +95,7 @@ func main() {
 	}
 	defer xmlFile.Close()
 
-	byteValue, _ := ioutil.ReadAll(xmlFile)
+	byteValue, _ := io.ReadAll(xmlFile)
 
 	var excel Excel
 	xml.Unmarshal(byteValue, &excel)
@@ -84,11 +122,60 @@ func main() {
 	}
 	defer stmt.Close()
 
+	cellToKey := make(map[string]string)
+
+	// First pass: Collect cell references and their corresponding keys
 	for _, sheet := range excel.Sheets {
 		var currentSeparator string
 		for _, row := range sheet.Rows {
 			if row.Separator != "" {
 				currentSeparator = row.Separator
+				cellToKey[fmt.Sprintf("%s!%s", sheet.Name, row.SeparatorCell)] = fmt.Sprintf("%s.%s.key", sheet.Name, currentSeparator)
+			}
+			if row.Key.Text != "" {
+				var compositeKey string
+				if currentSeparator != "" {
+					compositeKey = fmt.Sprintf("%s.%s.%s", sheet.Name, currentSeparator, row.Key.Text)
+				} else {
+					compositeKey = fmt.Sprintf("%s.%s", sheet.Name, row.Key.Text)
+				}
+				cellToKey[fmt.Sprintf("%s!%s", sheet.Name, row.Key.Cell)] = compositeKey
+				cellToKey[fmt.Sprintf("%s!%s", sheet.Name, row.Value.Cell)] = compositeKey
+			}
+		}
+	}
+
+	// Log the full cellToKey content to a file, sorted by the hashmap index
+	logFile, err := os.Create("cellToKey.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer logFile.Close()
+
+	keys := make([]string, 0, len(cellToKey))
+	for k := range cellToKey {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		fmt.Fprintf(logFile, "Cell: %s, Key: %s\n", k, cellToKey[k])
+	}
+
+	// Second pass: Insert data into the database with transformed formulas
+	for _, sheet := range excel.Sheets {
+		var currentSeparator string
+		for _, row := range sheet.Rows {
+			if row.Separator != "" {
+				currentSeparator = row.Separator
+
+				if sheet.Name == "Deployments" {
+					compositeKey := fmt.Sprintf("%s.%s.key", sheet.Name, currentSeparator)
+					value := currentSeparator
+					_, err = stmt.Exec(compositeKey, value)
+					if err != nil {
+						log.Printf("UNIQUE constraint failed for key: %s, value: %s, sheet: %s\n", compositeKey, value, sheet.Name)
+					}
+				}
 			}
 			if row.Key.Text != "" && row.Value.DefaultValue != "" {
 				var compositeKey string
@@ -97,9 +184,15 @@ func main() {
 				} else {
 					compositeKey = fmt.Sprintf("%s.%s", sheet.Name, row.Key.Text)
 				}
-				_, err = stmt.Exec(compositeKey, row.Value.DefaultValue)
+
+				value := row.Value.DefaultValue
+				if strings.HasPrefix(value, "=") {
+					value = transformFormula(value, cellToKey, sheet.Name, compositeKey)
+				}
+
+				_, err = stmt.Exec(compositeKey, value)
 				if err != nil {
-					log.Printf("UNIQUE constraint failed for key: %s, value: %s, sheet: %s\n", compositeKey, row.Value.DefaultValue, sheet.Name)
+					log.Printf("UNIQUE constraint failed for key: %s, value: %s, sheet: %s\n", compositeKey, value, sheet.Name)
 				}
 			}
 		}
