@@ -80,6 +80,33 @@ func replaceCellReferences(formula string, cellToKey map[string]string, sheetNam
 	})
 }
 
+func replaceDefinedNames(formula string, definedNames []string, definedNameToKey map[string]string) string {
+	// Split the formula into parts using a regular expression that matches the delimiters
+	re := regexp.MustCompile(`([=+()\s\t])`)
+	parts := re.Split(formula, -1)
+	delimiters := re.FindAllString(formula, -1)
+
+	// Replace the defined names in the parts
+	for i, part := range parts {
+		for _, definedName := range definedNames {
+			if part == definedName {
+				parts[i] = fmt.Sprintf(`Get("%s")`, definedNameToKey[definedName])
+			}
+		}
+	}
+
+	// Join the parts back together with the delimiters
+	var result strings.Builder
+	for i := 0; i < len(parts); i++ {
+		result.WriteString(parts[i])
+		if i < len(delimiters) {
+			result.WriteString(delimiters[i])
+		}
+	}
+
+	return result.String()
+}
+
 func main() {
 	// Configure logging to output to standard error
 	log.SetOutput(os.Stderr)
@@ -137,6 +164,7 @@ func main() {
 	defer stmt.Close()
 
 	cellToKey := make(map[string]string)
+	definedNameToKey := make(map[string]string)
 
 	// First pass: Collect cell references and their corresponding keys
 	for _, sheet := range excel.Sheets {
@@ -155,6 +183,9 @@ func main() {
 				}
 				cellToKey[fmt.Sprintf("%s!%s", sheet.Name, row.Key.Cell)] = compositeKey
 				cellToKey[fmt.Sprintf("%s!%s", sheet.Name, row.Value.Cell)] = compositeKey
+				if row.Value.DefinedName != "" {
+					definedNameToKey[row.Value.DefinedName] = compositeKey
+				}
 			}
 		}
 	}
@@ -179,11 +210,16 @@ func main() {
 		fmt.Fprintf(logFile, "Cell: %s, Key: %s\n", k, cellToKey[k])
 	}
 
-	// Second pass: Insert data into the database with transformed formulas
-	_, err = stmt.Exec("DeploymentGroups.key", "DeploymentGroups key description", "=Config.ISC_only.domain.contextRootOverwrite", "", "")
-	if err != nil {
-		log.Printf("UNIQUE constraint failed for key: %s, value: %s, sheet: %s\n", "DeploymentGroups.key", "=Config.ISC_only.domain.contextRootOverwrite", "DeploymentGroups")
+	// Sort defined names by length in descending order
+	definedNames := make([]string, 0, len(definedNameToKey))
+	for definedName := range definedNameToKey {
+		definedNames = append(definedNames, definedName)
 	}
+	sort.Slice(definedNames, func(i, j int) bool {
+		return len(definedNames[i]) > len(definedNames[j])
+	})
+
+	// Second pass: Insert data into the database with transformed formulas and replace defined names
 	for _, sheet := range excel.Sheets {
 		var currentSeparator string
 		for _, row := range sheet.Rows {
@@ -210,6 +246,9 @@ func main() {
 				value := row.Value.DefaultValue
 				if strings.HasPrefix(value, "=") {
 					value = transformFormula(value, cellToKey, sheet.Name, compositeKey)
+
+					// Replace defined names in the formula
+					value = replaceDefinedNames(value, definedNames, definedNameToKey)
 				}
 
 				description := row.Value.Comments
