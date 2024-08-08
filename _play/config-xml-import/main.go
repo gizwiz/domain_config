@@ -153,6 +153,10 @@ func main() {
 			}
 		}
 	}
+	// Adding the Deployments sheet cells which are not in config.xml file
+	cellToKey["Deployments!B2"] = "Domain.Domain.ilias.domain.name"
+	cellToKey["Deployments!C2"] = "DeploymentGroups.key"
+	cellToKey["SetupserverApps!C2"] = "DeploymentGroups.key"
 
 	// Log the full cellToKey content to a file, sorted by the hashmap index
 	logFile, err := os.Create("cellToKey.txt")
@@ -171,6 +175,11 @@ func main() {
 	}
 
 	// Second pass: Insert data into the database with transformed formulas
+	_, err = stmt.Exec("DeploymentGroups.key", "=Config.ISC_only.domain.contextRootOverwrite")
+	if err != nil {
+		log.Printf("UNIQUE constraint failed for key: %s, value: %s, sheet: %s\n", "DeploymentGroups.key", "=Config.ISC_only.domain.contextRootOverwrite", "DeploymentGroups")
+
+	}
 	for _, sheet := range excel.Sheets {
 		var currentSeparator string
 		for _, row := range sheet.Rows {
