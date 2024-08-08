@@ -33,6 +33,7 @@ type Row struct {
 	Value struct {
 		Cell         string `xml:"cell,attr"`
 		DefinedName  string `xml:"DefinedName"`
+		Comments     string `xml:"Comments"`
 		DefaultValue string `xml:"DefaultValue"`
 	} `xml:"V"`
 	SeparatorCell string `xml:"separatorCell,attr"`
@@ -211,7 +212,9 @@ func main() {
 					value = transformFormula(value, cellToKey, sheet.Name, compositeKey)
 				}
 
-				_, err = stmt.Exec(compositeKey, row.Key.Text, value, "", "")
+				description := row.Value.Comments
+
+				_, err = stmt.Exec(compositeKey, description, value, "", "")
 				if err != nil {
 					log.Printf("UNIQUE constraint failed for key: %s, value: %s, sheet: %s\n", compositeKey, value, sheet.Name)
 				}
