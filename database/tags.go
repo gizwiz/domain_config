@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+
 	"github.com/gizwiz/domain_config/models"
 )
 
@@ -28,7 +29,7 @@ func FetchTags(db *sql.DB) ([]models.Tag, error) {
 
 // Fetch all tags for a property
 func FetchPropertyTagIDs(db *sql.DB, propertyID int) ([]int, error) {
-	query := "select t.tag_id from property_tags t where t.property_id = :1"
+	query := "SELECT t.tag_id FROM property_tags t WHERE t.property_id = ?"
 	rows, err := db.Query(query, propertyID)
 	if err != nil {
 		return nil, err
