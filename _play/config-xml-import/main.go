@@ -116,15 +116,19 @@ func main() {
 	defer db.Close()
 
 	createTableSQL := `CREATE TABLE IF NOT EXISTS properties (
-		"key" TEXT NOT NULL PRIMARY KEY,
-		"value" TEXT
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		key TEXT UNIQUE,
+		description TEXT,
+		default_value TEXT,
+		calculated_value TEXT,
+		modified_value TEXT
 	);`
 	_, err = db.Exec(createTableSQL)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	insertSQL := `INSERT INTO properties (key, value) VALUES (?, ?)`
+	insertSQL := `INSERT INTO properties (key, description, default_value, calculated_value, modified_value) VALUES (?, ?, ?, ?, ?)`
 	stmt, err := db.Prepare(insertSQL)
 	if err != nil {
 		log.Fatal(err)
@@ -175,10 +179,9 @@ func main() {
 	}
 
 	// Second pass: Insert data into the database with transformed formulas
-	_, err = stmt.Exec("DeploymentGroups.key", "=Config.ISC_only.domain.contextRootOverwrite")
+	_, err = stmt.Exec("DeploymentGroups.key", "DeploymentGroups key description", "=Config.ISC_only.domain.contextRootOverwrite", "", "")
 	if err != nil {
 		log.Printf("UNIQUE constraint failed for key: %s, value: %s, sheet: %s\n", "DeploymentGroups.key", "=Config.ISC_only.domain.contextRootOverwrite", "DeploymentGroups")
-
 	}
 	for _, sheet := range excel.Sheets {
 		var currentSeparator string
@@ -189,7 +192,7 @@ func main() {
 				if sheet.Name == "Deployments" {
 					compositeKey := fmt.Sprintf("%s.%s.key", sheet.Name, currentSeparator)
 					value := currentSeparator
-					_, err = stmt.Exec(compositeKey, value)
+					_, err = stmt.Exec(compositeKey, "Deployments key description", value, "", "")
 					if err != nil {
 						log.Printf("UNIQUE constraint failed for key: %s, value: %s, sheet: %s\n", compositeKey, value, sheet.Name)
 					}
@@ -208,7 +211,7 @@ func main() {
 					value = transformFormula(value, cellToKey, sheet.Name, compositeKey)
 				}
 
-				_, err = stmt.Exec(compositeKey, value)
+				_, err = stmt.Exec(compositeKey, row.Key.Text, value, "", "")
 				if err != nil {
 					log.Printf("UNIQUE constraint failed for key: %s, value: %s, sheet: %s\n", compositeKey, value, sheet.Name)
 				}
