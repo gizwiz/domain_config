@@ -56,16 +56,25 @@ func transformFormula(formula string, cellToKey map[string]string, sheetName str
 }
 
 func replaceCellReferences(formula string, cellToKey map[string]string, sheetName string, compositeKey string) string {
-	re := regexp.MustCompile(`\$?[A-Z]+\$?\d+`)
+	re := regexp.MustCompile(`\$?[A-Z]+\$?\d+|\w+!\$?[A-Z]+\$?\d+`)
 	return re.ReplaceAllStringFunc(formula, func(cellRef string) string {
-		// Normalize cell reference by removing $ signs
-		normalizedCellRef := strings.ReplaceAll(cellRef, "$", "")
-		fullCellRef := fmt.Sprintf("%s!%s", sheetName, normalizedCellRef)
-		if key, exists := cellToKey[fullCellRef]; exists {
-			log.Printf("Cell reference FOUND: %s in formula: %s, sheet: %s, formula: %s, compositeKey: %s, key found: %s", cellRef, formula, sheetName, formula, compositeKey, key)
-			return key
+		// Check if the cell reference includes a sheet name
+		var normalizedCellRef, fullCellRef string
+		if strings.Contains(cellRef, "!") {
+			parts := strings.Split(cellRef, "!")
+			normalizedCellRef = strings.ReplaceAll(parts[1], "$", "")
+			fullCellRef = fmt.Sprintf("%s!%s", parts[0], normalizedCellRef)
+		} else {
+			normalizedCellRef = strings.ReplaceAll(cellRef, "$", "")
+			fullCellRef = fmt.Sprintf("%s!%s", sheetName, normalizedCellRef)
 		}
-		log.Printf("Cell reference not found: %s in formula: %s, sheet: %s, formula: %s, compositeKey: %s", cellRef, formula, sheetName, formula, compositeKey)
+
+		if key, exists := cellToKey[fullCellRef]; exists {
+			log.Printf("Cell reference FOUND: %s in formula: %s, sheet: %s, compositeKey: %s, key found: %s", cellRef, formula, sheetName, compositeKey, key)
+			return fmt.Sprintf(`Get("%s")`, key)
+		}
+
+		log.Printf("Cell reference not found: %s in formula: %s, sheet: %s, compositeKey: %s", cellRef, formula, sheetName, compositeKey)
 		return cellRef
 	})
 }
@@ -129,7 +138,7 @@ func main() {
 		var currentSeparator string
 		for _, row := range sheet.Rows {
 			if row.Separator != "" {
-				currentSeparator = row.Separator
+				currentSeparator = strings.ReplaceAll(row.Separator, " ", "_")
 				cellToKey[fmt.Sprintf("%s!%s", sheet.Name, row.SeparatorCell)] = fmt.Sprintf("%s.%s.key", sheet.Name, currentSeparator)
 			}
 			if row.Key.Text != "" {
@@ -166,7 +175,7 @@ func main() {
 		var currentSeparator string
 		for _, row := range sheet.Rows {
 			if row.Separator != "" {
-				currentSeparator = row.Separator
+				currentSeparator = strings.ReplaceAll(row.Separator, " ", "_")
 
 				if sheet.Name == "Deployments" {
 					compositeKey := fmt.Sprintf("%s.%s.key", sheet.Name, currentSeparator)
