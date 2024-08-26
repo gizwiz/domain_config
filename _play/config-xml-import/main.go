@@ -30,7 +30,7 @@ type Row struct {
 		Cell string `xml:"cell,attr"`
 		Text string `xml:",chardata"`
 	} `xml:"Key"`
-	Value struct {
+	Value []struct {
 		Cell         string `xml:"cell,attr"`
 		DefinedName  string `xml:"DefinedName"`
 		Comments     string `xml:"Comments"`
@@ -171,7 +171,7 @@ func main() {
 		var currentSeparator string
 		for _, row := range sheet.Rows {
 			if row.Separator != "" {
-				currentSeparator = strings.ReplaceAll(row.Separator, " ", "_")
+				currentSeparator = cleanupSeparator(row.Separator)
 				cellToKey[fmt.Sprintf("%s!%s", sheet.Name, row.SeparatorCell)] = fmt.Sprintf("%s.%s.key", sheet.Name, currentSeparator)
 			}
 			if row.Key.Text != "" {
@@ -219,14 +219,24 @@ func main() {
 		return len(definedNames[i]) > len(definedNames[j])
 	})
 
+	// Log the full cellToKey content to a file, sorted by the hashmap index
+	logFile2, err := os.Create("definedNames.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer logFile2.Close()
+	for _, definedName := range definedNames {
+		fmt.Fprintf(logFile2, "Defined name: %s, Key: %s\n", definedName, definedNameToKey[definedName])
+	}
+
 	// Second pass: Insert data into the database with transformed formulas and replace defined names
 	for _, sheet := range excel.Sheets {
 		var currentSeparator string
 		for _, row := range sheet.Rows {
 			if row.Separator != "" {
-				currentSeparator = strings.ReplaceAll(row.Separator, " ", "_")
+				currentSeparator = cleanupSeparator(row.Separator)
 
-				if sheet.Name == "Deployments" {
+				if sheet.Name == "Deployments" || sheet.Name == "StandaloneApps" || sheet.Name == "SetupserverApps" {
 					compositeKey := fmt.Sprintf("%s.%s.key", sheet.Name, currentSeparator)
 					value := currentSeparator
 					_, err = stmt.Exec(compositeKey, "Deployments key description", value, "", "")
@@ -235,7 +245,8 @@ func main() {
 					}
 				}
 			}
-			if row.Key.Text != "" && row.Value.DefaultValue != "" {
+			// if row.Key.Text != "" && row.Value.DefaultValue != "" {
+			if row.Key.Text != "" {
 				var compositeKey string
 				if currentSeparator != "" {
 					compositeKey = fmt.Sprintf("%s.%s.%s", sheet.Name, currentSeparator, row.Key.Text)
@@ -262,4 +273,16 @@ func main() {
 	}
 
 	fmt.Println("Database created successfully.")
+}
+
+func cleanupSeparator(currentSeparator string) string {
+	var result string
+	result = strings.ReplaceAll(currentSeparator, " / ", "_")
+	result = strings.ReplaceAll(result, "/", "_")
+	result = strings.ReplaceAll(result, " - ", "_")
+	result = strings.ReplaceAll(result, "> ", "")
+	result = strings.ReplaceAll(result, ">", "")
+	result = strings.ReplaceAll(result, " ", "_")
+	result = strings.ReplaceAll(result, "Relative_portnumber_(useful_when_multiple_domains_on_same_server)", "DELTA")
+	return result
 }

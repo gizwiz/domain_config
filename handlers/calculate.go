@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"fmt"
+
 	"github.com/expr-lang/expr"
 	"github.com/gizwiz/domain_config/database"
 	"github.com/gizwiz/domain_config/models"
@@ -18,9 +19,22 @@ func CalculateProperties(db *sql.DB, c echo.Context) error {
 	}
 
 	// for all formula properties, calculate one by one
-	err = calculateFunctionPropertiesDB(db)
-	if err != nil {
-		return errors.Wrapf(err, "can not calculate function properties")
+	for _, extraClause := range []string{
+		"and key like 'Config.%'",
+		"and key like 'Port%'",
+		"and key like 'Database%'",
+		"and key like 'Domain%'",
+		"and key like 'DeploymentGroups%'",
+		"and key like 'Deployment%'",
+		"and key like 'StandaloneApps%'",
+		"and key like 'SetupserverApps%'",
+		//"and key like 'Datasources%'",
+		//"", // everything remaining (although here we are doing too )
+	} {
+		err = calculateFunctionPropertiesDB(db, extraClause)
+		if err != nil {
+			return errors.Wrapf(err, "can not calculate function properties")
+		}
 	}
 
 	return nil
@@ -81,10 +95,10 @@ func (env *Env) Get(key string) (string, error) {
 	return calculatedValue, nil
 }
 
-func calculateFunctionPropertiesDB(db *sql.DB) error {
+func calculateFunctionPropertiesDB(db *sql.DB, extraWhereClause string) error {
 
 	// loop through all formula properties and calculate them compiling the expressions
-	rows, err := db.Query("select id, key, description, default_value, modified_value from properties where calculated_value is NULL")
+	rows, err := db.Query(fmt.Sprintf("select id, key, description, default_value, modified_value from properties where calculated_value is NULL %s", extraWhereClause))
 	if err != nil {
 		return errors.Wrap(err, "can not select none-calculated properties")
 	}
