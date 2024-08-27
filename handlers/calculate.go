@@ -28,7 +28,8 @@ func CalculateProperties(db *sql.DB, c echo.Context) error {
 		"and key like 'Deployment%'",
 		"and key like 'StandaloneApps%'",
 		"and key like 'SetupserverApps%'",
-		"and key like 'Datasources%'",
+		"and key like 'DataSources%'",
+		"and key like 'WorkManagers%'",
 		//"", // everything remaining (although here we are doing too )
 	} {
 		err = calculateFunctionPropertiesDB(db, extraClause)
