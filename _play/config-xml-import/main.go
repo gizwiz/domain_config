@@ -56,6 +56,67 @@ func transformFormula(formula string, cellToKey map[string]string, sheetName str
 	return replaceCellReferences(formula, cellToKey, sheetName, compositeKey)
 }
 
+func processDatasourcesSheet(sheet Sheet, stmt *sql.Stmt, cellToKey map[string]string, definedNames []string, definedNameToKey map[string]string) {
+	columnToKey := map[int]string{
+		0:  "Name",
+		1:  "JNDI",
+		2:  "DriverClassName",
+		3:  "Database",
+		4:  "User",
+		5:  "Password",
+		6:  "InitialCapacity",
+		7:  "MinimumCapacity",
+		8:  "MaximumCapacity",
+		9:  "Targets",
+		10: "_",
+		11: "_",
+		12: "InitSQL",
+	}
+
+	for _, row := range sheet.Rows {
+		if row.Key.Text == "" {
+			continue
+		}
+		rowKey := row.Key.Text
+		for i, value := range row.Value {
+			columnKey := columnToKey[i]
+			// ignore _ cells (these contain duplicate formulas)
+			if columnKey == "_" {
+				continue
+			}
+			compositeKey := fmt.Sprintf("%s.%s.%s", sheet.Name, rowKey, columnKey)
+
+			v := value.DefaultValue
+			if strings.HasPrefix(v, "=") {
+				v = transformFormula(v, cellToKey, sheet.Name, compositeKey)
+
+				// Replace defined names in the formula
+				v = replaceDefinedNames(v, definedNames, definedNameToKey)
+
+				v = strings.ReplaceAll(v, fmt.Sprintf(`Get("DataSources.%s")`, rowKey), fmt.Sprintf(`Get("DataSources.%s.Key")`, rowKey))
+			}
+
+			description := value.Comments
+
+			// adding a Key field as well, because some formulas refer to the .Key field
+			if i == 0 {
+				compositeKey1 := fmt.Sprintf("%s.%s.Key", sheet.Name, rowKey)
+				_, err := stmt.Exec(compositeKey1, "key of the datasource", rowKey, "", "")
+				if err != nil {
+					log.Printf("Error inserting Datasources Key: %s, value: %s\n", compositeKey1, rowKey)
+				}
+			}
+
+			// adding a key/value in the db for this excel column (cell)
+			_, err := stmt.Exec(compositeKey, description, v, "", "")
+			if err != nil {
+				log.Printf("Error inserting Datasources key: %s, value: %s\n", compositeKey, v)
+			}
+
+		}
+	}
+}
+
 func replaceCellReferences(formula string, cellToKey map[string]string, sheetName string, compositeKey string) string {
 	re := regexp.MustCompile(`\$?[A-Z]+\$?\d+|\w+!\$?[A-Z]+\$?\d+`)
 	return re.ReplaceAllStringFunc(formula, func(cellRef string) string {
@@ -182,9 +243,9 @@ func main() {
 					compositeKey = fmt.Sprintf("%s.%s", sheet.Name, row.Key.Text)
 				}
 				cellToKey[fmt.Sprintf("%s!%s", sheet.Name, row.Key.Cell)] = compositeKey
-				cellToKey[fmt.Sprintf("%s!%s", sheet.Name, row.Value.Cell)] = compositeKey
-				if row.Value.DefinedName != "" {
-					definedNameToKey[row.Value.DefinedName] = compositeKey
+				cellToKey[fmt.Sprintf("%s!%s", sheet.Name, row.Value[0].Cell)] = compositeKey
+				if row.Value[0].DefinedName != "" {
+					definedNameToKey[row.Value[0].DefinedName] = compositeKey
 				}
 			}
 		}
@@ -228,9 +289,15 @@ func main() {
 	for _, definedName := range definedNames {
 		fmt.Fprintf(logFile2, "Defined name: %s, Key: %s\n", definedName, definedNameToKey[definedName])
 	}
-
 	// Second pass: Insert data into the database with transformed formulas and replace defined names
 	for _, sheet := range excel.Sheets {
+		if sheet.Name == "DataSources" {
+			processDatasourcesSheet(sheet, stmt, cellToKey, definedNames, definedNameToKey)
+			continue
+		}
+		//TODO remove
+		// continue
+
 		var currentSeparator string
 		for _, row := range sheet.Rows {
 			if row.Separator != "" {
@@ -254,7 +321,7 @@ func main() {
 					compositeKey = fmt.Sprintf("%s.%s", sheet.Name, row.Key.Text)
 				}
 
-				value := row.Value.DefaultValue
+				value := row.Value[0].DefaultValue
 				if strings.HasPrefix(value, "=") {
 					value = transformFormula(value, cellToKey, sheet.Name, compositeKey)
 
@@ -262,7 +329,7 @@ func main() {
 					value = replaceDefinedNames(value, definedNames, definedNameToKey)
 				}
 
-				description := row.Value.Comments
+				description := row.Value[0].Comments
 
 				_, err = stmt.Exec(compositeKey, description, value, "", "")
 				if err != nil {
