@@ -171,6 +171,58 @@ func processWorkmanagersSheet(sheet Sheet, stmt *sql.Stmt, cellToKey map[string]
 	}
 }
 
+func processRcuSheet(sheet Sheet, stmt *sql.Stmt, cellToKey map[string]string, definedNames []string, definedNameToKey map[string]string) {
+	columnToKey := map[int]string{
+		0: "SchemaPrefix",
+		1: "Database",
+		2: "Password",
+		3: "SysPassword",
+	}
+
+	for _, row := range sheet.Rows {
+		if row.Key.Text == "" {
+			continue
+		}
+		// rowKey := row.Key.Text
+		for i, value := range row.Value {
+			columnKey := columnToKey[i]
+			// ignore _ cells (these contain duplicate formulas)
+			if columnKey == "_" {
+				continue
+			}
+			compositeKey := fmt.Sprintf("%s.%s", sheet.Name, columnKey)
+
+			v := value.DefaultValue
+			if strings.HasPrefix(v, "=") {
+				v = transformFormula(v, cellToKey, sheet.Name, compositeKey)
+
+				// Replace defined names in the formula
+				v = replaceDefinedNames(v, definedNames, definedNameToKey)
+
+				// v = strings.ReplaceAll(v, fmt.Sprintf(`Get("WorkManagers.%s")`, rowKey), fmt.Sprintf(`Get("WorkManagers.%s.Key")`, rowKey))
+			}
+
+			description := value.Comments
+
+			// // adding a Key field as well, because some formulas refer to the .Key field
+			// if i == 1 {
+			// 	compositeKey1 := fmt.Sprintf("%s.%s.Key", sheet.Name, rowKey)
+			// 	_, err := stmt.Exec(compositeKey1, "key of the Workmanager", rowKey, "", "")
+			// 	if err != nil {
+			// 		log.Printf("Error inserting Workmanager Key: %s, value: %s\n", compositeKey1, rowKey)
+			// 	}
+			// }
+
+			// adding a key/value in the db for this excel column (cell)
+			_, err := stmt.Exec(compositeKey, description, v, "", "")
+			if err != nil {
+				log.Printf("Error inserting RCU key: %s, value: %s\n", compositeKey, v)
+			}
+
+		}
+	}
+}
+
 func replaceCellReferences(formula string, cellToKey map[string]string, sheetName string, compositeKey string) string {
 	re := regexp.MustCompile(`\$?[A-Z]+\$?\d+|\w+!\$?[A-Z]+\$?\d+`)
 	return re.ReplaceAllStringFunc(formula, func(cellRef string) string {
@@ -352,6 +404,10 @@ func main() {
 		case "WorkManagers":
 			processWorkmanagersSheet(sheet, stmt, cellToKey, definedNames, definedNameToKey)
 			continue
+		case "RCU":
+			processRcuSheet(sheet, stmt, cellToKey, definedNames, definedNameToKey)
+			continue
+
 		default:
 			// single value sheets here
 			var currentSeparator string
