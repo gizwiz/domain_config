@@ -189,21 +189,21 @@ templ PropertyList(data []models.PropertyValue) {
 			<thead>
 				<tr class="bg-white text-left">
 					<th class="px-6 py-2">Key</th>
-					<th class="px-6 py-2">Description</th>
 					<th class="px-6 py-2">Value</th>
+					<th class="px-6 py-2">Description</th>
 				</tr>
 			</thead>
 			<tbody class="divide-y divide-gray-300">
 				for _, item := range data {
 					<tr tabindex="0" data-id={ strconv.Itoa(item.ID) } class="border-solid border-1 border-sky-500">
 						<td class="font-mono text-sm spx-6 py-2">{ item.Key }</td>
-						if item.Description.Valid {
-							<td class="px-6 py-2">{ item.Description.String }</td>
+						if item.Value.Valid {
+							<td class="px-6 py-2">{ item.Value.String }</td>
 						} else {
 							<td></td>
 						}
-						if item.Value.Valid {
-							<td class="px-6 py-2">{ item.Value.String }</td>
+						if item.Description.Valid {
+							<td class="px-6 py-2">{ item.Description.String }</td>
 						} else {
 							<td></td>
 						}
