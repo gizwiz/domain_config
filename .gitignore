@@ -5,6 +5,11 @@ internal_notes.txt
 mailmap.txt
 _export
 .idea
+.run
 tmp
 node_modules
 bin
+.DS_Store
+_play/config-xml-import/*.txt
+_play/tmp.txt
+properties.sql
