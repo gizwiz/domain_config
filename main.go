@@ -4,9 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"embed"
+	"flag"
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/a-h/templ"
@@ -19,6 +21,8 @@ import (
 )
 
 const dbName = "main.db"
+
+var limitedEditMode bool
 
 // TemplRender is a custom renderer for Templ components in Echo
 type TemplRender struct{}
@@ -37,7 +41,21 @@ func (t *TemplRender) Render(w io.Writer, name string, data interface{}, c echo.
 }
 
 func main() {
-	err := mainWithErrors()
+	// accept a command line argument limitEditMode
+	flag.BoolVar(&limitedEditMode, "limitedEditMode", true, "Enable limited edit mode")
+	flag.Parse()
+	// or environment variable LIMITED_EDIT_MODE
+	envLimitedEditMode := os.Getenv("LIMITED_EDIT_MODE")
+	if envLimitedEditMode != "" {
+		var err error
+		limitedEditMode, err = strconv.ParseBool(envLimitedEditMode)
+		if err != nil {
+			log.Printf("Error parsing LIMITED_EDIT_MODE environment variable: %v. Using flag value.", err)
+		}
+	}
+
+	log.Printf("Starting application with limitedEditMode set to: %v", limitedEditMode)
+	err := mainWithErrors(limitedEditMode)
 	if err != nil {
 		log.Fatalf("error: %+v", err)
 	}
@@ -102,7 +120,7 @@ func propertyList(db *sql.DB, c echo.Context) error {
 	return c.Render(http.StatusOK, "", views.PropertyList(props))
 }
 
-func mainWithErrors() error {
+func mainWithErrors(limitedEditMode bool) error {
 
 	db, err := sql.Open("sqlite", dbName)
 	if err != nil {
@@ -154,7 +172,8 @@ func mainWithErrors() error {
 		if err != nil {
 			return errors.Wrapf(err, "can not fetch properties")
 		}
-		return c.Render(http.StatusOK, "getPropertiesForm", views.PropertyEditForm(allTags))
+
+		return c.Render(http.StatusOK, "getPropertiesForm", views.PropertyEditForm(allTags, limitedEditMode))
 	})
 
 	e.GET("/tables", func(c echo.Context) error {
